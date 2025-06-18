@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: online-compiler
+    name: compiler-backend
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
@@ -21,6 +21,16 @@ spring:
       hibernate:
         format_sql: true
 
+app:
+  base-url: http://localhost:3000
+
+logging:
+  level:
+    com.example.compiler: INFO
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
 management:
   endpoints:
     web:
@@ -29,8 +39,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-logging:
-  level:
-    com.example.compiler: DEBUG
-    org.springframework.web: DEBUG
