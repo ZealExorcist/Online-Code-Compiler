@@ -22,24 +22,26 @@ export async function executeCode(code, language, input = '') {
   }
 }
 
-export async function shareSnippet(code, language) {
+export async function shareSnippet(code, language, input = '', title = '') {
   try {
-    const response = await api.post('/snippets', {
+    const response = await api.post('/share', {
       code,
-      language
+      language,
+      input,
+      title
     })
     return response.data
   } catch (error) {
-    throw new Error(error.response?.data?.error || 'Failed to share snippet')
+    throw new Error(error.response?.data?.error || 'Failed to create share link')
   }
 }
 
-export async function getSnippet(id) {
+export async function loadSharedCode(shareId) {
   try {
-    const response = await api.get(`/snippets/${id}`)
+    const response = await api.get(`/load/${shareId}`)
     return response.data
   } catch (error) {
-    throw new Error(error.response?.data?.error || 'Failed to load snippet')
+    throw new Error(error.response?.data?.error || 'Failed to load shared code')
   }
 }
 

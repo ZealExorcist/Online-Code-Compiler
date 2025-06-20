@@ -13,11 +13,9 @@
           <span v-if="isLoading">⏳ Running...</span>
           <span v-else>▶️ Run</span>
         </button>
-        <button @click="shareCode" class="btn btn-share">
-          📤 Share
-        </button>
       </div>
-    </div>    <div class="editor-wrapper">
+    </div>
+    <div class="editor-wrapper">
       <div v-if="!editorReady" class="editor-loading">
         <div class="spinner"></div>
         <p>Loading Monaco Editor...</p>
@@ -50,12 +48,15 @@ export default {
       editor: null,
       editorReady: false,
       currentLanguage: this.language,
+      isChangingLanguage: false,
+      languageChangeTimer: null,
       languages: [
         { id: 'python', name: 'Python' },
         { id: 'java', name: 'Java' },
         { id: 'cpp', name: 'C++' },
         { id: 'c', name: 'C' },
         { id: 'javascript', name: 'JavaScript' },
+        { id: 'typescript', name: 'TypeScript' },
         { id: 'go', name: 'Go' },
         { id: 'rust', name: 'Rust' },
         { id: 'ruby', name: 'Ruby' },
@@ -66,8 +67,10 @@ export default {
   },
   mounted() {
     this.initMonaco()
-  },
-  beforeUnmount() {
+  },  beforeUnmount() {
+    if (this.languageChangeTimer) {
+      clearTimeout(this.languageChangeTimer);
+    }
     if (this.editor) {
       this.editor.dispose()
     }
@@ -121,15 +124,9 @@ export default {
         this.editor.onDidChangeModelContent(() => {
           const value = this.editor.getValue()
           this.$emit('code-change', value)
-        })
-
-        // Keyboard shortcuts
+        })        // Keyboard shortcuts
         this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
           this.runCode()
-        })
-
-        this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-          this.shareCode()
         })
 
         this.editorReady = true
@@ -137,13 +134,13 @@ export default {
         console.error('Failed to initialize Monaco Editor:', error)
       }
     },
-    getMonacoLanguage(lang) {
-      const mappings = {
+    getMonacoLanguage(lang) {      const mappings = {
         'python': 'python',
         'java': 'java',
         'cpp': 'cpp',
         'c': 'c',
         'javascript': 'javascript',
+        'typescript': 'typescript',
         'go': 'go',
         'rust': 'rust',
         'ruby': 'ruby',
@@ -151,18 +148,34 @@ export default {
         'csharp': 'csharp'
       }
       return mappings[lang] || 'plaintext'
-    },
-    onLanguageChange() {
-      this.$emit('language-change', this.currentLanguage)
-      if (this.editor) {
-        monaco.editor.setModelLanguage(this.editor.getModel(), this.getMonacoLanguage(this.currentLanguage))
+    },    onLanguageChange() {
+      if (this.isChangingLanguage) return;
+      
+      this.isChangingLanguage = true;
+      
+      // Clear any pending language change
+      if (this.languageChangeTimer) {
+        clearTimeout(this.languageChangeTimer);
       }
+      
+      // Debounce language changes to prevent crashes
+      this.languageChangeTimer = setTimeout(() => {
+        try {
+          this.$emit('language-change', this.currentLanguage);
+          
+          if (this.editor && this.editor.getModel()) {
+            const newLanguage = this.getMonacoLanguage(this.currentLanguage);
+            monaco.editor.setModelLanguage(this.editor.getModel(), newLanguage);
+          }
+        } catch (error) {
+          console.error('Error changing language:', error);
+        } finally {
+          this.isChangingLanguage = false;
+        }
+      }, 300); // 300ms debounce
     },
     runCode() {
       this.$emit('run-code')
-    },
-    shareCode() {
-      this.$emit('share-code')
     }
   }
 }

@@ -2,7 +2,7 @@
   <header class="header">
     <div class="header-content">
       <div class="logo">
-        <h1>🚀 Online Compiler</h1>
+        <h1>Online Compiler</h1>
         <span class="subtitle">Code, Compile, Execute</span>
       </div>
       <div class="header-info">
@@ -25,7 +25,7 @@ export default {
 
 <style scoped>
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1e1e2f;
   color: white;
   padding: 1rem 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);

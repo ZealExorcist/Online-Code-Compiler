@@ -15,6 +15,18 @@ const router = createRouter({
       name: 'Snippet',
       component: Snippet,
       props: true
+    },
+    {
+      path: '/share/:id',
+      name: 'Share',
+      component: Snippet,
+      props: true
+    },
+    {
+      path: '/s/:id',
+      name: 'ShortShare',
+      component: Snippet,
+      props: true
     }
   ]
 })

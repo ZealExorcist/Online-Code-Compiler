@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  compiler-python:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.python
+    image: online-compiler/python:latest
+    container_name: compiler-python-build
+    command: echo "Python image built"
+
+  compiler-java:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.java
+    image: online-compiler/java:latest
+    container_name: compiler-java-build
+    command: echo "Java image built"
+
+  compiler-cpp:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.cpp
+    image: online-compiler/cpp:latest
+    container_name: compiler-cpp-build
+    command: echo "C++ image built"
+
+  compiler-javascript:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.javascript
+    image: online-compiler/javascript:latest
+    container_name: compiler-javascript-build
+    command: echo "JavaScript image built"
+
+  compiler-go:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.go
+    image: online-compiler/go:latest
+    container_name: compiler-go-build
+    command: echo "Go image built"
+
+  compiler-r:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.r
+    image: online-compiler/r:latest
+    container_name: compiler-r-build
+    command: echo "R image built"
+
+  compiler-ruby:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.ruby
+    image: online-compiler/ruby:latest
+    container_name: compiler-ruby-build
+    command: echo "Ruby image built"
+
+  compiler-rust:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.rust
+    image: online-compiler/rust:latest
+    container_name: compiler-rust-build
+    command: echo "Rust image built"
+
+  compiler-typescript:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.typescript
+    image: online-compiler/typescript:latest
+    container_name: compiler-typescript-build
+    command: echo "TypeScript image built"

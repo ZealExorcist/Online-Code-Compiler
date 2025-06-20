@@ -1,6 +1,27 @@
 <template>
   <div class="compiler-interface">
     <Header />
+    
+    <!-- Loading State for Snippet -->
+    <div v-if="isLoadingSnippet" class="snippet-loading">
+      <div class="loading-spinner"></div>
+      <p>Loading shared code...</p>
+    </div>
+    
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="left-actions">
+        <LoadComponent @code-loaded="handleCodeLoaded" />
+      </div>
+      <div class="right-actions">
+        <ShareComponent 
+          :code="currentCode" 
+          :language="selectedLanguage" 
+          :input="currentInput"
+        />
+      </div>
+    </div>
+    
     <div class="main-content">
       <CodeEditor 
         :code="currentCode" 
@@ -8,7 +29,6 @@
         @code-change="handleCodeChange"
         @language-change="handleLanguageChange"
         @run-code="executeCode"
-        @share-code="shareCode"
         :isLoading="isExecuting"
       />
       <OutputPanel 
@@ -26,7 +46,9 @@ import Header from './Header.vue'
 import CodeEditor from './CodeEditor.vue'
 import OutputPanel from './OutputPanel.vue'
 import Footer from './Footer.vue'
-import { executeCode, shareSnippet, getSnippet } from '../services/api'
+import ShareComponent from './ShareComponent.vue'
+import LoadComponent from './LoadComponent.vue'
+import { executeCode, loadSharedCode } from '../services/api'
 
 export default {
   name: 'CompilerInterface',
@@ -34,7 +56,9 @@ export default {
     Header,
     CodeEditor,
     OutputPanel,
-    Footer
+    Footer,
+    ShareComponent,
+    LoadComponent
   },
   props: {
     snippetId: {
@@ -46,29 +70,60 @@ export default {
     return {
       currentCode: `print("Hello, World!")`,
       selectedLanguage: 'python',
+      currentInput: '',
       executionOutput: null,
-      isExecuting: false
+      isExecuting: false,
+      isLoadingSnippet: false
     }
   },
   async mounted() {
     if (this.snippetId) {
-      await this.loadSnippet(this.snippetId)
+      await this.loadSnippet()
     }
   },
   watch: {
-    snippetId(newId) {
-      if (newId) {
-        this.loadSnippet(newId)
-      }
+    snippetId: {
+      handler: 'loadSnippet',
+      immediate: true
     }
-  },
-  methods: {
+  },  methods: {
+    async loadSnippet() {
+      if (!this.snippetId) return
+      
+      this.isLoadingSnippet = true
+      try {
+        const data = await loadSharedCode(this.snippetId)
+        this.currentCode = data.code
+        this.selectedLanguage = data.language
+        this.currentInput = data.input || ''
+        
+        // Show success message
+        this.$nextTick(() => {
+          const title = data.title || 'Untitled'
+          console.log(`Loaded shared code: ${title} (${data.language})`)
+        })
+      } catch (error) {
+        console.error('Failed to load snippet:', error)
+        alert(`Failed to load shared code: ${error.message}`)
+      } finally {
+        this.isLoadingSnippet = false
+      }
+    },
     handleCodeChange(newCode) {
       this.currentCode = newCode
-    },
-    handleLanguageChange(newLanguage) {
+    },handleLanguageChange(newLanguage) {
       this.selectedLanguage = newLanguage
       this.currentCode = this.getDefaultCode(newLanguage)
+    },
+    handleCodeLoaded(loadedData) {
+      this.currentCode = loadedData.code
+      this.selectedLanguage = loadedData.language
+      this.currentInput = loadedData.input || ''
+      
+      // Show a success message
+      this.$nextTick(() => {
+        alert(`Code loaded successfully!\nLanguage: ${loadedData.language}\nTitle: ${loadedData.title || 'Untitled'}`)
+      })
     },
     async executeCode() {
       if (!this.currentCode.trim()) {
@@ -80,7 +135,7 @@ export default {
       this.executionOutput = null
 
       try {
-        const result = await executeCode(this.currentCode, this.selectedLanguage)
+        const result = await executeCode(this.currentCode, this.selectedLanguage, this.currentInput)
         this.executionOutput = result
       } catch (error) {
         this.executionOutput = {
@@ -89,41 +144,6 @@ export default {
         }
       } finally {
         this.isExecuting = false
-      }
-    },
-    async shareCode() {
-      if (!this.currentCode.trim()) {
-        alert('Please enter some code to share.')
-        return
-      }
-
-      try {
-        const result = await shareSnippet(this.currentCode, this.selectedLanguage)
-        const shareUrl = `${window.location.origin}/snippets/${result.id}`
-        
-        // Copy to clipboard if available
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(shareUrl)
-          alert(`Snippet saved! URL copied to clipboard:\n${shareUrl}`)
-        } else {
-          alert(`Snippet saved! Share this URL:\n${shareUrl}`)
-        }
-        
-        // Navigate to the snippet URL
-        this.$router.push(`/snippets/${result.id}`)
-      } catch (error) {
-        alert('Failed to share code: ' + error.message)
-      }
-    },
-    async loadSnippet(id) {
-      try {
-        const snippet = await getSnippet(id)
-        this.currentCode = snippet.code
-        this.selectedLanguage = snippet.language
-      } catch (error) {
-        alert('Failed to load snippet: ' + error.message)
-        // Redirect to home on error
-        this.$router.push('/')
       }
     },
     clearOutput() {
@@ -151,6 +171,11 @@ int main() {
     return 0;
 }`,
         javascript: `console.log("Hello, World!");`,
+        typescript: `function greet(name: string): string {
+    return "Hello, " + name + "!";
+}
+
+console.log(greet("TypeScript"));`,
         go: `package main
 
 import "fmt"
@@ -184,6 +209,53 @@ class Program {
   flex-direction: column;
 }
 
+.snippet-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.snippet-loading p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  gap: 10px;
+}
+
+.left-actions,
+.right-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .main-content {
   flex: 1;
   display: flex;
@@ -191,6 +263,17 @@ class Program {
 }
 
 @media (max-width: 768px) {
+  .action-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .left-actions,
+  .right-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
   .main-content {
     flex-direction: column;
   }

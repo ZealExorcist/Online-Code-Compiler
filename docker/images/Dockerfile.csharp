@@ -1,0 +1,21 @@
+FROM mono:latest
+
+# Set working directory
+WORKDIR /workspace
+
+# Create non-root user for security
+RUN groupadd -r coderunner && useradd -r -g coderunner coderunner
+
+# Install C# compiler
+RUN apt-get update && \
+    apt-get install -y mono-mcs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Change ownership of workspace
+RUN chown -R coderunner:coderunner /workspace
+
+# Switch to non-root user
+USER coderunner
+
+# Default command
+CMD ["mono"]
