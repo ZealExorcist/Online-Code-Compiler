@@ -25,7 +25,8 @@ public class SecurityConfig {
                                          JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))            .authorizeHttpRequests(authz -> authz                // Public endpoints - only login, register, and signup should be public
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))            .authorizeHttpRequests(authz -> authz
+                // Public endpoints - allow anonymous access to core functionality
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/signup").permitAll()
@@ -33,10 +34,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                // Core functionality - allow anonymous access
+                .requestMatchers("/api/execute").permitAll()
+                .requestMatchers("/api/languages").permitAll()
                 // Protected auth endpoints - me, refresh-api-key, validate require authentication
                 .requestMatchers("/api/auth/**").authenticated()
                 // Protected endpoints (require authentication OR valid API key)
-                .requestMatchers("/api/execute").authenticated()
                 .requestMatchers("/api/snippets/**").authenticated()
                 .requestMatchers("/api/user/**").authenticated()
                 // Admin endpoints

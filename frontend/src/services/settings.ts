@@ -4,21 +4,70 @@ import authService from './auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
+// Types for settings
+export interface UserSettings {
+  theme: string
+  fontSize: string
+  fontFamily: string
+  enableAutoComplete: boolean
+  enableLineNumbers: boolean
+  enableFolding: boolean
+  defaultLanguage: string
+  enableKeyboardShortcuts: boolean
+  tabSize: number
+  insertSpaces: boolean
+  wordWrap: boolean
+  minimap: boolean
+  colorScheme: string
+  maxExecutionTime: number
+  maxOutputSize: number
+  enableInput: boolean
+  publicSnippets: boolean
+  shareByDefault: boolean
+}
+
+export interface UserProfile {
+  id: string
+  username: string
+  email: string
+  tier: string
+  createdAt: string
+  lastLoginAt: string
+}
+
+export interface UserStatistics {
+  totalExecutions: number
+  totalSnippets: number
+  favoriteLanguage: string
+  executionsThisMonth: number
+  avgExecutionTime: number
+}
+
+export interface Tier {
+  name: string
+  displayName: string
+  features: string[]
+  maxExecutions: number
+  maxExecutionTime: number
+  priority: number
+  price?: number
+}
+
 export class SettingsService {
   // Get user settings
-  async getUserSettings() {
+  async getUserSettings(): Promise<UserSettings> {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/user/settings`, {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to get settings')
     }
   }
 
   // Update user settings
-  async updateUserSettings(settings) {
+  async updateUserSettings(settings: Partial<UserSettings>): Promise<UserSettings> {
     try {
       const response = await axios.put(`${API_BASE_URL}/api/user/settings`, settings, {
         headers: authService.getAuthHeaders()
@@ -28,24 +77,25 @@ export class SettingsService {
       localStorage.setItem('user_settings', JSON.stringify(response.data))
       
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to update settings')
     }
   }
 
   // Get user profile
-  async getUserProfile() {
+  async getUserProfile(): Promise<UserProfile> {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to get profile')    }
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to get profile')
+    }
   }
 
   // Change password
-  async changePassword(oldPassword, newPassword) {
+  async changePassword(oldPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axios.put(`${API_BASE_URL}/api/user/password`, {
         oldPassword,
@@ -54,61 +104,61 @@ export class SettingsService {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to change password')
     }
   }
 
   // Generate new API key
-  async generateNewApiKey() {
+  async generateNewApiKey(): Promise<{ apiKey: string }> {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/user/generate-api-key`, {}, {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to generate API key')
     }
   }
 
   // Get user statistics
-  async getUserStatistics() {
+  async getUserStatistics(): Promise<UserStatistics> {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/user/statistics`, {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to get statistics')
     }
   }
 
   // Get available tiers
-  async getAvailableTiers() {
+  async getAvailableTiers(): Promise<Tier[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/user/tiers`, {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to get tiers')
     }
   }
 
   // Upgrade tier
-  async upgradeTier(tier) {
+  async upgradeTier(tier: string): Promise<{ success: boolean; message: string; newTier: string }> {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/user/upgrade`, { tier }, {
         headers: authService.getAuthHeaders()
       })
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to upgrade tier')
     }
   }
 
   // Get cached settings from localStorage
-  getCachedSettings() {
+  getCachedSettings(): UserSettings {
     const cached = localStorage.getItem('user_settings')
     if (cached) {
       try {
@@ -121,7 +171,7 @@ export class SettingsService {
   }
 
   // Get default settings
-  getDefaultSettings() {
+  getDefaultSettings(): UserSettings {
     return {
       theme: 'dark',
       fontSize: '14px',
@@ -145,7 +195,7 @@ export class SettingsService {
   }
 
   // Apply settings to editor
-  applySettingsToEditor(editorInstance, settings) {
+  applySettingsToEditor(editorInstance: any, settings: UserSettings): void {
     if (!editorInstance || !settings) return
 
     try {
@@ -177,13 +227,14 @@ export class SettingsService {
   }
 }
 
-export default new SettingsService()
+const settingsService = new SettingsService()
+export default settingsService
 
 // Export individual functions for easier import
-export const getUserSettings = () => new SettingsService().getUserSettings()
-export const updateUserSettings = (settings) => new SettingsService().updateUserSettings(settings)
-export const getUserProfile = () => new SettingsService().getUserProfile()
-export const changePassword = (oldPassword, newPassword) => new SettingsService().changePassword(oldPassword, newPassword)
-export const generateNewApiKey = () => new SettingsService().generateNewApiKey()
-export const getAvailableTiers = () => new SettingsService().getAvailableTiers()
-export const upgradeTier = (tier) => new SettingsService().upgradeTier(tier)
+export const getUserSettings = () => settingsService.getUserSettings()
+export const updateUserSettings = (settings: Partial<UserSettings>) => settingsService.updateUserSettings(settings)
+export const getUserProfile = () => settingsService.getUserProfile()
+export const changePassword = (oldPassword: string, newPassword: string) => settingsService.changePassword(oldPassword, newPassword)
+export const generateNewApiKey = () => settingsService.generateNewApiKey()
+export const getAvailableTiers = () => settingsService.getAvailableTiers()
+export const upgradeTier = (tier: string) => settingsService.upgradeTier(tier)

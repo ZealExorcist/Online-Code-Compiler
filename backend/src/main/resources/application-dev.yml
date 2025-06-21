@@ -10,7 +10,7 @@ spring:
 app:
   base-url: http://localhost:3000
   execution:
-    mode: mock # Use mock execution for development
+    mode: docker # Use docker execution for development and production
     timeout: 10
     memory-limit: 128m
     cpu-limit: 0.5

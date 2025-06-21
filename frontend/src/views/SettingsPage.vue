@@ -276,7 +276,7 @@
 </template>
 
 <script>
-import settingsService from '../services/settings.js'
+import settingsService from '../services/settings'
 import authService from '../services/auth'
 
 export default {

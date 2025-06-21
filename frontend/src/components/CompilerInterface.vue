@@ -41,11 +41,12 @@
         </div>
       </div>
       <div class="resizer" @mousedown="startResize"></div>
-      <div class="output-section" :style="{ width: (100 - editorWidth) + '%' }">
-        <OutputPanel 
+      <div class="output-section" :style="{ width: (100 - editorWidth) + '%' }">        <OutputPanel 
           :output="executionOutput"
           :isLoading="isExecuting"
+          :needsInput="needsInput"
           @clear-output="clearOutput"
+          @send-input="handleSendInput"
         />
       </div>
     </div>
@@ -101,7 +102,7 @@ import Footer from './Footer.vue'
 import ShareComponent from './ShareComponent.vue'
 import LoadComponent from './LoadComponent.vue'
 import UpgradeComponent from './UpgradeComponent.vue'
-import { executeCode, loadSharedCode } from '../services/api'
+import { executeCode, loadSharedCode, saveSnippet } from '../services/api'
 
 export default {
   name: 'CompilerInterface',  components: {
@@ -129,9 +130,9 @@ export default {
       isSaving: false,
       saveModalData: {
         title: ''
-      },
-      editorWidth: 50, // Percentage width for the editor
-      isResizing: false
+      },      editorWidth: 50, // Percentage width for the editor
+      isResizing: false,
+      needsInput: false
     }
   },
   async mounted() {
@@ -166,9 +167,10 @@ export default {
       } finally {
         this.isLoadingSnippet = false
       }
-    },
-    handleCodeChange(newCode) {
+    },    handleCodeChange(newCode) {
       this.currentCode = newCode
+      // Detect if the code might need input
+      this.needsInput = this.detectNeedsInput(newCode, this.selectedLanguage)
     },handleLanguageChange(newLanguage) {
       this.selectedLanguage = newLanguage
       this.currentCode = this.getDefaultCode(newLanguage)
@@ -355,6 +357,30 @@ class Program {
       this.isResizing = false
       document.removeEventListener('mousemove', this.handleResize)
       document.removeEventListener('mouseup', this.stopResize)
+    },
+    handleSendInput(input) {
+      console.log('Sending input to program:', input)
+      // For now, we'll append the input to the current input field
+      // In a real implementation, this would be sent to the running process
+      this.currentInput = this.currentInput ? this.currentInput + '\n' + input : input
+      this.needsInput = false
+      
+      // Re-execute with the new input
+      this.executeCode()
+    },
+    detectNeedsInput(code, language) {
+      // Simple detection of input requirements based on common patterns
+      const inputPatterns = {
+        python: /input\s*\(/,
+        java: /Scanner|System\.in\.read|Console\.readLine/,
+        cpp: /cin\s*>>/,
+        c: /scanf|getchar|gets/,
+        javascript: /prompt\s*\(/,
+        csharp: /Console\.ReadLine|Console\.Read/
+      }
+      
+      const pattern = inputPatterns[language.toLowerCase()]
+      return pattern && pattern.test(code)
     },
   },
   beforeUnmount() {

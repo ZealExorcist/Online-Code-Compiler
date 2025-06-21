@@ -8,6 +8,19 @@
           </option>
         </select>
       </div>
+      <div class="toolbar-center">
+        <div class="editor-settings">
+          <button @click="toggleWordWrap" :class="['setting-btn', { active: editorSettings.wordWrap }]" title="Toggle Word Wrap">
+            📝 Wrap
+          </button>
+          <button @click="toggleMinimap" :class="['setting-btn', { active: editorSettings.minimap }]" title="Toggle Minimap">
+            🗺️ Map
+          </button>
+          <button @click="toggleInsertSpaces" :class="['setting-btn', { active: editorSettings.insertSpaces }]" title="Toggle Insert Spaces">
+            {{ editorSettings.insertSpaces ? '␣' : '→' }} {{ editorSettings.insertSpaces ? 'Spaces' : 'Tabs' }}
+          </button>
+        </div>
+      </div>
       <div class="toolbar-right">
         <button @click="runCode" :disabled="isLoading" class="btn btn-run">
           <span v-if="isLoading">⏳ Running...</span>
@@ -43,14 +56,19 @@ export default {
       type: Boolean,
       default: false
     }
-  },
-  data() {
+  },  data() {
     return {
       editor: null,
       editorReady: false,
       currentLanguage: this.language,
       isChangingLanguage: false,
       languageChangeTimer: null,
+      editorSettings: {
+        wordWrap: false,
+        minimap: true,
+        insertSpaces: true,
+        tabSize: 4
+      },
       languages: [
         { id: 'python', name: 'Python' },
         { id: 'java', name: 'Java' },
@@ -96,6 +114,10 @@ export default {
         this.editor = createEditor(this.$refs.editorContainer, {
           doc: this.code,
           language: this.currentLanguage,
+          wordWrap: this.editorSettings.wordWrap,
+          minimap: this.editorSettings.minimap,
+          insertSpaces: this.editorSettings.insertSpaces,
+          tabSize: this.editorSettings.tabSize,
           onChange: (value) => {
             this.$emit('code-change', value)
           },
@@ -136,7 +158,25 @@ export default {
     },
     runCode() {
       this.$emit('run-code')
-    }
+    },
+    toggleWordWrap() {
+      this.editorSettings.wordWrap = !this.editorSettings.wordWrap
+      if (this.editor) {
+        this.editor.updateWordWrap(this.editorSettings.wordWrap)
+      }
+    },
+    toggleMinimap() {
+      this.editorSettings.minimap = !this.editorSettings.minimap
+      if (this.editor) {
+        this.editor.updateMinimap(this.editorSettings.minimap)
+      }
+    },
+    toggleInsertSpaces() {
+      this.editorSettings.insertSpaces = !this.editorSettings.insertSpaces
+      if (this.editor) {
+        this.editor.updateIndentConfig(this.editorSettings.insertSpaces, this.editorSettings.tabSize)
+      }
+    },
   }
 }
 </script>
@@ -163,6 +203,38 @@ export default {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.toolbar-center {
+  display: flex;
+  align-items: center;
+}
+
+.editor-settings {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.setting-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #5a5a5a;
+  border-radius: 4px;
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.setting-btn:hover {
+  background-color: #4a4a4a;
+}
+
+.setting-btn.active {
+  background-color: #007acc;
+  border-color: #007acc;
+  color: white;
 }
 
 .toolbar-right {

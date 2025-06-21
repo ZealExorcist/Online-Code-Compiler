@@ -1,5 +1,5 @@
 import axios from 'axios'
-import authService from './auth.ts'
+import authService from './auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -14,7 +14,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const authHeaders = authService.getAuthHeaders()
-    config.headers = { ...config.headers, ...authHeaders }
+    Object.assign(config.headers, authHeaders)
     return config
   },
   (error) => {
@@ -35,7 +35,7 @@ api.interceptors.response.use(
   }
 )
 
-export async function executeCode(code, language, input = '') {
+export async function executeCode(code: string, language: string, input: string = '') {
   try {
     const response = await api.post('/execute', {
       code,
@@ -43,7 +43,7 @@ export async function executeCode(code, language, input = '') {
       input
     })
     return response.data
-  } catch (error) {
+  } catch (error: any) {
     if (error.response?.status === 429) {
       throw new Error('Rate limit exceeded. Please wait before trying again.')
     }
@@ -51,7 +51,7 @@ export async function executeCode(code, language, input = '') {
   }
 }
 
-export async function shareSnippet(code, language, input = '', title = '') {
+export async function shareSnippet(code: string, language: string, input: string = '', title: string = '') {
   try {
     const response = await api.post('/share', {
       code,
@@ -60,16 +60,16 @@ export async function shareSnippet(code, language, input = '', title = '') {
       title
     })
     return response.data
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(error.response?.data?.error || error.response?.data?.message || 'Failed to create share link')
   }
 }
 
-export async function loadSharedCode(shareId) {
+export async function loadSharedCode(shareId: string) {
   try {
     const response = await api.get(`/load/${shareId}`)
     return response.data
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(error.response?.data?.error || error.response?.data?.message || 'Failed to load shared code')
   }
 }
@@ -80,5 +80,29 @@ export async function getSupportedLanguages() {
     return response.data
   } catch (error) {
     throw new Error('Failed to load supported languages')
+  }
+}
+
+export async function saveSnippet(title: string, code: string, language: string, input: string = '', isPublic: boolean = false) {
+  try {
+    const response = await api.post('/snippets', {
+      title,
+      code,
+      language,
+      input,
+      isPublic
+    })
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || error.response?.data?.message || 'Failed to save snippet')
+  }
+}
+
+export async function getUserProfile() {
+  try {
+    const response = await api.get('/user/profile')
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || error.response?.data?.message || 'Failed to get user profile')
   }
 }

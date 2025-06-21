@@ -1,15 +1,16 @@
 <template>
   <div class="output-panel">
     <div class="output-header">
-      <h3>Output</h3>
-      <div class="output-controls">
+      <h3>Output</h3>      <div class="output-controls">
+        <button @click="toggleInputPanel" class="btn btn-input" :class="{ active: showInputPanel }">
+          ⌨️ Input
+        </button>
         <button @click="clearOutput" class="btn btn-clear" :disabled="!output">
           🗑️ Clear
         </button>
       </div>
     </div>
-    
-    <div class="output-content">
+      <div class="output-content">
       <div v-if="isLoading" class="loading">
         <div class="spinner"></div>
         <p>Executing code...</p>
@@ -59,14 +60,38 @@
           <p class="no-output">Program executed successfully with no output.</p>
         </div>
       </div>
+      
+      <!-- Input Section -->
+      <div v-if="needsInput || showInputPanel" class="input-section">
+        <div class="input-header">
+          <span class="icon">⌨️</span>
+          <span class="label">Program Input</span>
+          <button @click="clearInput" class="clear-input-btn" title="Clear Input">
+            🗑️
+          </button>
+        </div>
+        <div class="input-area">
+          <textarea 
+            v-model="userInput"
+            placeholder="Enter input for your program here..."
+            class="input-textarea"
+            @keydown.ctrl.enter="sendInput"
+            @keydown.meta.enter="sendInput"
+          ></textarea>
+          <div class="input-actions">
+            <button @click="sendInput" :disabled="!userInput.trim()" class="send-input-btn">
+              Send Input (Ctrl+Enter)
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'OutputPanel',
-  props: {
+  name: 'OutputPanel',  props: {
     output: {
       type: Object,
       default: null
@@ -74,11 +99,32 @@ export default {
     isLoading: {
       type: Boolean,
       default: false
+    },
+    needsInput: {
+      type: Boolean,
+      default: false
     }
   },
-  methods: {
+  data() {
+    return {
+      showInputPanel: false,
+      userInput: ''
+    }
+  },  methods: {
     clearOutput() {
       this.$emit('clear-output')
+    },
+    toggleInputPanel() {
+      this.showInputPanel = !this.showInputPanel
+    },
+    sendInput() {
+      if (this.userInput.trim()) {
+        this.$emit('send-input', this.userInput)
+        this.userInput = ''
+      }
+    },
+    clearInput() {
+      this.userInput = ''
     }
   }
 }
@@ -249,6 +295,108 @@ export default {
   margin: 0;
   font-style: italic;
   color: #858585;
+}
+
+.input-section {
+  background-color: #252526;
+  border-top: 1px solid #3c3c3c;
+  border-radius: 0 0 6px 6px;
+}
+
+.input-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #2d2d30;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.input-header .label {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #d4d4d4;
+}
+
+.clear-input-btn {
+  background: none;
+  border: none;
+  color: #d4d4d4;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.clear-input-btn:hover {
+  background-color: #3c3c3c;
+}
+
+.input-area {
+  padding: 1rem;
+}
+
+.input-textarea {
+  width: 100%;
+  min-height: 80px;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.input-textarea:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.input-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.send-input-btn {
+  background-color: #007acc;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.send-input-btn:hover:not(:disabled) {
+  background-color: #005a9e;
+}
+
+.send-input-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.btn-input {
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+}
+
+.btn-input.active {
+  background-color: #007acc;
+  color: white;
+}
+
+.btn-input:hover {
+  background-color: #4a4a4a;
+}
+
+.btn-input.active:hover {
+  background-color: #005a9e;
 }
 
 @media (max-width: 768px) {
