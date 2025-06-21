@@ -30,16 +30,31 @@ export default {
     // Simple connectivity check
     this.checkConnection()
     setInterval(this.checkConnection, 30000) // Check every 30 seconds
-  },
-  methods: {
+  },  methods: {
     async checkConnection() {
       try {
-        const response = await fetch('http://localhost:8080/api/languages', {
+        // Create AbortController for timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000)
+        
+        const response = await fetch('http://localhost:8080/api/public/health', {
           method: 'GET',
-          timeout: 5000
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         })
-        this.isOnline = response.ok
+        
+        clearTimeout(timeoutId)
+        
+        if (response.ok) {
+          const data = await response.json()
+          this.isOnline = data.status === 'online'
+        } else {
+          this.isOnline = false
+        }
       } catch (error) {
+        console.log('Connection check failed:', error.message)
         this.isOnline = false
       }
     }

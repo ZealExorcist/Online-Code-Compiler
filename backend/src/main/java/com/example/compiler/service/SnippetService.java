@@ -1,30 +1,42 @@
 package com.example.compiler.service;
 
 import com.example.compiler.model.Snippet;
+import com.example.compiler.repository.SnippetRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 
 @Service
 public class SnippetService {
     
-    private final Map<String, Snippet> snippetStore = new ConcurrentHashMap<>();
+    @Autowired
+    private SnippetRepository snippetRepository;
     
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
     
     public String saveSnippet(String code, String language) {
         String id = generateUniqueId();
-        Snippet snippet = new Snippet(id, code, language);
-        snippetStore.put(id, snippet);
+        Snippet snippet = new Snippet(code, language);
+        snippet.setId(id);
+        snippetRepository.save(snippet);
+        return id;
+    }
+    
+    public String saveSnippet(String code, String language, String userId, String username) {
+        String id = generateUniqueId();
+        Snippet snippet = new Snippet(code, language, userId, username);
+        snippet.setId(id);
+        snippetRepository.save(snippet);
         return id;
     }
     
     public Snippet getSnippet(String id) {
-        return snippetStore.get(id);
+        Optional<Snippet> snippet = snippetRepository.findById(id);
+        return snippet.orElse(null);
     }
     
     public String generateShareUrl(String id) {
@@ -37,10 +49,10 @@ public class SnippetService {
     }
     
     public boolean snippetExists(String id) {
-        return snippetStore.containsKey(id);
+        return snippetRepository.existsById(id);
     }
     
-    public int getSnippetCount() {
-        return snippetStore.size();
+    public long getSnippetCount() {
+        return snippetRepository.count();
     }
 }

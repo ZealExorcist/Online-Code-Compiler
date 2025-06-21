@@ -1,52 +1,39 @@
-server:
-  port: 8080
-
+# Development Profile Configuration
 spring:
-  application:
-    name: compiler-backend
-  profiles:
-    active: development
+  # MongoDB Configuration for development
+  data:
+    mongodb:
+      uri: mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority
+      database: online-compiler
 
+# Development-specific application settings
 app:
   base-url: http://localhost:3000
   execution:
-    mode: mock # Can be 'docker' or 'mock'
+    mode: mock # Use mock execution for development
     timeout: 10
     memory-limit: 128m
     cpu-limit: 0.5
+  # Rate limiting for development (more lenient)
+  rate-limit:
+    requests-per-minute: 30
+    burst-capacity: 50
 
+# Development logging
 logging:
   level:
     com.example.compiler: DEBUG
-    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+# Enable all actuator endpoints for development
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*"
   endpoint:
     health:
       show-details: always
-
----
-spring:
-  config:
-    activate:
-      on-profile: development
-
-app:
-  execution:
-    mode: mock
-
----
-spring:
-  config:
-    activate:
-      on-profile: production
-
-app:
-  execution:
-    mode: docker

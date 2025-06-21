@@ -46,9 +46,19 @@ public class ExecutionService {
         }
         return TIMEOUT_SECONDS; // 10 seconds for others
     }
+      public ExecuteResponse executeCode(String code, String language, String input) {
+        return executeCode(code, language, input, null);
+    }
     
-    public ExecuteResponse executeCode(String code, String language, String input) {
+    public ExecuteResponse executeCode(String code, String language, String input, String userId) {
         long startTime = System.currentTimeMillis();
+        
+        // Log execution with user info
+        if (userId != null) {
+            logger.info("Executing {} code for user: {}", language, userId);
+        } else {
+            logger.info("Executing {} code for anonymous user", language);
+        }
         
         try {
             // Check execution mode

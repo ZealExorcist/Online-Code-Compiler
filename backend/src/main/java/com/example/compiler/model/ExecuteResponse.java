@@ -1,6 +1,7 @@
 package com.example.compiler.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExecuteResponse {
     private String stdout;
@@ -8,6 +9,7 @@ public class ExecuteResponse {
     private int exitCode;
     private String error; // For compilation or runtime errors
     private long executionTime; // In milliseconds
+    private Map<String, Object> metadata = new HashMap<>(); // Additional metadata
     
     public ExecuteResponse() {}
     
@@ -63,12 +65,23 @@ public class ExecuteResponse {
     public void setError(String error) {
         this.error = error;
     }
-    
-    public long getExecutionTime() {
+      public long getExecutionTime() {
         return executionTime;
     }
     
     public void setExecutionTime(long executionTime) {
         this.executionTime = executionTime;
+    }
+    
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+    
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+    
+    public void setMetadata(String key, Object value) {
+        this.metadata.put(key, value);
     }
 }

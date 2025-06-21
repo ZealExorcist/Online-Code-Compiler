@@ -1,0 +1,46 @@
+# Production Profile Configuration
+spring:
+  # MongoDB Configuration for production
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/online-compiler}
+      database: ${MONGODB_DATABASE:online-compiler}
+
+# Production application settings
+app:
+  base-url: ${APP_BASE_URL:https://your-domain.com}
+  execution:
+    mode: docker # Use Docker for code execution in production
+    timeout: 30
+    memory-limit: 256m
+    cpu-limit: 1.0
+  # JWT Configuration
+  jwt:
+    secret: ${JWT_SECRET:}
+    expiration: 3600000 # 1 hour in production
+  # Stricter rate limiting for production
+  rate-limit:
+    requests-per-minute: 10
+    burst-capacity: 20
+
+# Production logging
+logging:
+  level:
+    com.example.compiler: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.springframework.data.mongodb: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+  file:
+    name: /var/log/compiler/application.log
+
+# Limited actuator endpoints for production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

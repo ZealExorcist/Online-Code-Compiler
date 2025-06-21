@@ -7,11 +7,13 @@
       <div class="loading-spinner"></div>
       <p>Loading shared code...</p>
     </div>
-    
-    <!-- Action Bar -->
+      <!-- Action Bar -->
     <div class="action-bar">
       <div class="left-actions">
         <LoadComponent @code-loaded="handleCodeLoaded" />
+      </div>
+      <div class="center-actions">
+        <UpgradeComponent @tier-updated="handleTierUpdated" />
       </div>
       <div class="right-actions">
         <ShareComponent 
@@ -48,17 +50,18 @@ import OutputPanel from './OutputPanel.vue'
 import Footer from './Footer.vue'
 import ShareComponent from './ShareComponent.vue'
 import LoadComponent from './LoadComponent.vue'
+import UpgradeComponent from './UpgradeComponent.vue'
 import { executeCode, loadSharedCode } from '../services/api'
 
 export default {
-  name: 'CompilerInterface',
-  components: {
+  name: 'CompilerInterface',  components: {
     Header,
     CodeEditor,
     OutputPanel,
     Footer,
     ShareComponent,
-    LoadComponent
+    LoadComponent,
+    UpgradeComponent
   },
   props: {
     snippetId: {
@@ -197,7 +200,11 @@ class Program {
 }`
       }
       return defaults[language] || `// ${language} code here`
-    }
+    },
+    handleTierUpdated(newTier) {
+      console.log(`Tier updated to: ${newTier}`)
+      // You can add any additional logic here, like refreshing user info
+    },
   }
 }
 </script>
@@ -251,9 +258,15 @@ class Program {
 }
 
 .left-actions,
+.center-actions,
 .right-actions {
   display: flex;
   gap: 10px;
+}
+
+.center-actions {
+  flex: 1;
+  justify-content: center;
 }
 
 .main-content {
@@ -269,6 +282,7 @@ class Program {
   }
   
   .left-actions,
+  .center-actions,
   .right-actions {
     width: 100%;
     justify-content: center;

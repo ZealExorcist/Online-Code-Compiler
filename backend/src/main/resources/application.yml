@@ -4,32 +4,47 @@ server:
 spring:
   application:
     name: compiler-backend
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  profiles:
+    active: dev
+  # MongoDB Configuration Only
+  data:
+    mongodb:
+      uri: mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority
+      database: online-compiler
+  # Disable JPA and H2 completely
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+  # Allow circular references temporarily
+  main:
+    allow-circular-references: true
 
+# Default Application Configuration
 app:
-  base-url: http://localhost:3000
+  base-url: http://localhost:8080
   execution:
-    mode: docker
+    mode: mock
+  # JWT Configuration
+  jwt:
+    secret: mySecretKey12345678901234567890123456789012345678901234567890
+    expiration: 86400000 # 24 hours in milliseconds
+  # Rate Limiting Configuration
+  rate-limit:
+    requests-per-minute: 10
+    burst-capacity: 20
+  # Default Admin User
+  admin:
+    username: admin
+    password: admin123
+    email: admin@compiler.com
 
 logging:
   level:
     com.example.compiler: INFO
-    org.springframework.web: DEBUG
+    org.springframework.security: WARN
+    org.springframework.web: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
@@ -40,4 +55,4 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
