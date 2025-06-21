@@ -86,7 +86,8 @@ export default {
 
 <style scoped>
 .output-panel {
-  width: 40%;
+  width: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #1e1e1e;
@@ -140,6 +141,7 @@ export default {
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
+  min-height: 0; /* Allow content to shrink */
 }
 
 .loading {

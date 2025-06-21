@@ -145,6 +145,49 @@
                   />
                   Enable Input Panel
                 </label>
+              </div>            </div>
+
+            <!-- Snippets Settings -->
+            <div v-if="activeTab === 'snippets'" class="settings-section">
+              <h4>My Snippets</h4>
+              
+              <div v-if="isLoadingSnippets" class="loading-state">
+                <p>Loading snippets...</p>
+              </div>
+              
+              <div v-else-if="snippets.length === 0" class="empty-state">
+                <p>No snippets saved yet. Create and save your first snippet!</p>
+              </div>
+              
+              <div v-else class="snippets-list">
+                <div 
+                  v-for="snippet in snippets" 
+                  :key="snippet.id"
+                  class="snippet-item"
+                >
+                  <div class="snippet-header">
+                    <h6>{{ snippet.title || 'Untitled Snippet' }}</h6>
+                    <span class="snippet-language">{{ snippet.language }}</span>
+                  </div>
+                  <div class="snippet-meta">
+                    <span class="snippet-date">{{ formatDate(snippet.createdAt) }}</span>
+                    <span class="snippet-length">{{ snippet.code.length }} chars</span>
+                  </div>
+                  <div class="snippet-preview">
+                    <pre>{{ snippet.code.substring(0, 150) }}{{ snippet.code.length > 150 ? '...' : '' }}</pre>
+                  </div>
+                  <div class="snippet-actions">
+                    <button @click="loadSnippet(snippet)" class="load-snippet-btn">
+                      Load
+                    </button>
+                    <button @click="shareSnippet(snippet)" class="share-snippet-btn">
+                      Share
+                    </button>
+                    <button @click="deleteSnippet(snippet.id)" class="delete-snippet-btn">
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -254,10 +297,37 @@
         <!-- Success/Error Messages -->
         <div v-if="successMessage" class="success-message">
           <p>✅ {{ successMessage }}</p>
-        </div>
-
-        <div v-if="errorMessage" class="error-message">
+        </div>        <div v-if="errorMessage" class="error-message">
           <p>❌ {{ errorMessage }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay delete-modal-overlay" @click="closeDeleteModal">
+      <div class="modal-content delete-modal-content" @click.stop>
+        <div class="modal-header delete-modal-header">
+          <h3>🗑️ Delete Snippet</h3>
+          <button @click="closeDeleteModal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body delete-modal-body">
+          <div class="warning-icon">⚠️</div>
+          <div class="warning-content">
+            <h4>Are you sure you want to delete this snippet?</h4>
+            <p v-if="snippetToDelete">
+              <strong>"{{ snippetToDelete.title || 'Untitled Snippet' }}"</strong>
+            </p>
+            <p class="warning-text">This action cannot be undone. The snippet will be permanently removed from your account.</p>
+          </div>
+        </div>
+        <div class="modal-footer delete-modal-footer">
+          <button @click="closeDeleteModal" class="btn btn-cancel">
+            Cancel
+          </button>
+          <button @click="confirmDeleteSnippet" class="btn btn-delete" :disabled="isDeleting">
+            <span v-if="isDeleting">⏳ Deleting...</span>
+            <span v-else>🗑️ Delete Snippet</span>
+          </button>
         </div>
       </div>
     </div>
@@ -287,22 +357,25 @@ export default {
         enableInput: true,
         publicSnippets: false,
         shareByDefault: false
-      },
-      userProfile: null,
+      },      userProfile: null,
+      snippets: [],
+      isLoadingSnippets: false,
       passwordForm: {
         oldPassword: '',
         newPassword: '',
         confirmPassword: ''
-      },
-      tabs: [
+      },      tabs: [
         { id: 'editor', name: 'Editor' },
         { id: 'execution', name: 'Execution' },
+        { id: 'snippets', name: 'Snippets' },
         { id: 'account', name: 'Account' },
         { id: 'privacy', name: 'Privacy' }
-      ],
-      copied: false,
+      ],      copied: false,
       isRegenerating: false,
       isChangingPassword: false,
+      isDeleting: false,
+      showDeleteModal: false,
+      snippetToDelete: null,
       successMessage: '',
       errorMessage: ''
     }
@@ -310,6 +383,17 @@ export default {
   computed: {
     currentTheme() {
       return this.settings.theme || 'light'
+    }
+  },
+  watch: {
+    'settings.theme'(newTheme, oldTheme) {
+      // Prevent modal from closing when theme changes
+      // Just update the data-theme attribute
+      if (newTheme !== oldTheme) {
+        this.$nextTick(() => {
+          document.documentElement.setAttribute('data-theme', newTheme)
+        })
+      }
     }
   },
   methods: {
@@ -328,6 +412,92 @@ export default {
       } catch (error) {
         console.error('Failed to load user profile:', error)
       }
+    },    async loadSnippets() {
+      this.isLoadingSnippets = true
+      try {
+        const response = await fetch('/api/user/snippets', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        if (response.ok) {
+          this.snippets = await response.json()
+        } else {
+          console.error('Failed to load snippets:', response.statusText)
+        }
+      } catch (error) {
+        console.error('Failed to load snippets:', error)
+      } finally {
+        this.isLoadingSnippets = false
+      }
+    },
+
+    loadSnippet(snippet) {
+      this.$emit('load-snippet', snippet)
+      this.closeModal()
+    },
+
+    async shareSnippet(snippet) {
+      try {
+        const response = await fetch('/api/share', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            code: snippet.code,
+            language: snippet.language,
+            title: snippet.title
+          })
+        })
+        if (response.ok) {
+          const result = await response.json()
+          navigator.clipboard.writeText(result.shareUrl)
+          this.showSuccess('Share link copied to clipboard!')
+        }
+      } catch (error) {
+        this.showError('Failed to share snippet')
+      }
+    },    async deleteSnippet(snippetId) {
+      const snippet = this.snippets.find(s => s.id === snippetId)
+      this.snippetToDelete = snippet
+      this.showDeleteModal = true
+    },
+
+    closeDeleteModal() {
+      this.showDeleteModal = false
+      this.snippetToDelete = null
+      this.isDeleting = false
+    },
+
+    async confirmDeleteSnippet() {
+      if (!this.snippetToDelete) return
+      
+      this.isDeleting = true
+      
+      try {
+        const response = await fetch(`/api/user/snippets/${this.snippetToDelete.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        })
+        if (response.ok) {
+          this.snippets = this.snippets.filter(s => s.id !== this.snippetToDelete.id)
+          this.showSuccess('Snippet deleted successfully!')
+          this.closeDeleteModal()
+        } else {
+          const errorData = await response.json()
+          this.showError('Failed to delete snippet: ' + (errorData.message || 'Server error'))
+        }
+      } catch (error) {
+        console.error('Failed to delete snippet:', error)
+        this.showError('Failed to delete snippet')
+      } finally {
+        this.isDeleting = false
+      }
     },
 
     async updateSettings() {
@@ -335,6 +505,7 @@ export default {
         await updateUserSettings(this.settings)
         this.showSuccess('Settings updated successfully!')
         this.$emit('settings-updated', this.settings)
+        // Don't close modal when settings are updated
       } catch (error) {
         this.showError('Failed to update settings: ' + error.message)
       }
@@ -419,6 +590,7 @@ export default {
   async mounted() {
     await this.loadSettings()
     await this.loadUserProfile()
+    await this.loadSnippets()
   }
 }
 </script>
@@ -429,8 +601,8 @@ export default {
 }
 
 .settings-btn {
-  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-  color: white;
+  background: var(--btn-bg, linear-gradient(135deg, #6c757d 0%, #495057 100%));
+  color: var(--btn-text, white);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -771,13 +943,283 @@ export default {
   color: white;
 }
 
+.snippets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.snippet-item {
+  background: var(--snippet-bg, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.snippet-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.snippet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.snippet-header h6 {
+  margin: 0;
+  color: var(--text-color, #1f2937);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.snippet-language {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.snippet-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--meta-color, #6b7280);
+}
+
+.snippet-preview {
+  margin-bottom: 12px;
+}
+
+.snippet-preview pre {
+  background: var(--code-bg, #f3f4f6);
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 12px;
+  color: var(--code-color, #374151);
+  overflow: hidden;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.snippet-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.load-snippet-btn,
+.share-snippet-btn,
+.delete-snippet-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-snippet-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.share-snippet-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.delete-snippet-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.load-snippet-btn:hover,
+.share-snippet-btn:hover,
+.delete-snippet-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--meta-color, #6b7280);
+}
+
+/* Delete Modal Styles */
+.delete-modal-overlay {
+  backdrop-filter: blur(4px);
+}
+
+.delete-modal-content {
+  max-width: 500px;
+  width: 90vw;
+}
+
+.delete-modal-header {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.delete-modal-header h3 {
+  color: white;
+}
+
+.delete-modal-header .close-btn {
+  color: white;
+}
+
+.delete-modal-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.delete-modal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+}
+
+.warning-icon {
+  font-size: 48px;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.warning-content h4 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.warning-content p {
+  margin: 0 0 8px 0;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.warning-text {
+  color: #6b7280 !important;
+  font-size: 14px;
+}
+
+.delete-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 12px 12px;
+}
+
+.delete-modal-footer .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delete-modal-footer .btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.delete-modal-footer .btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.delete-modal-footer .btn-delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.delete-modal-footer .btn-delete:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.delete-modal-footer .btn-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Dark mode support for delete modal */
+.settings-component[data-theme="dark"] .delete-modal-content {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+.settings-component[data-theme="dark"] .delete-modal-body {
+  background: #1f2937;
+}
+
+.settings-component[data-theme="dark"] .warning-content h4 {
+  color: #f9fafb;
+}
+
+.settings-component[data-theme="dark"] .warning-content p {
+  color: #d1d5db;
+}
+
+.settings-component[data-theme="dark"] .delete-modal-footer {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.settings-component[data-theme="dark"] .delete-modal-footer .btn-cancel {
+  background: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+.settings-component[data-theme="dark"] .delete-modal-footer .btn-cancel:hover {
+  background: #4b5563;
+}
+
 /* Dark mode support */
+.settings-component[data-theme="dark"] {
+  --btn-bg: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  --btn-text: #f9fafb;
+}
+
 .settings-component[data-theme="dark"] .modal-content {
   --modal-bg: #1f2937;
   --text-color: #f9fafb;
   --header-bg: #374151;
   --nav-bg: #374151;
   --border-color: #4b5563;
+}
+
+.settings-component[data-theme="light"] {
+  --btn-bg: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  --btn-text: white;
+}
+
+.settings-component[data-theme="light"] .modal-content {
+  --modal-bg: white;
+  --text-color: #1f2937;
+  --header-bg: #f9fafb;
+  --nav-bg: #f9fafb;
+  --border-color: #e5e7eb;
 }
 
 .settings-component[data-theme="dark"] .nav-button {
@@ -821,6 +1263,13 @@ export default {
 
 .settings-component[data-theme="dark"] .close-btn:hover {
   background: #4b5563;
+}
+
+.settings-component[data-theme="dark"] .snippet-item {
+  --snippet-bg: #374151;
+  --code-bg: #1f2937;
+  --code-color: #d1d5db;
+  --meta-color: #9ca3af;
 }
 
 @media (max-width: 768px) {

@@ -2,8 +2,10 @@ package com.example.compiler.controller;
 
 import com.example.compiler.model.User;
 import com.example.compiler.model.UserTier;
+import com.example.compiler.model.Snippet;
 import com.example.compiler.security.UserPrincipal;
 import com.example.compiler.service.UserService;
+import com.example.compiler.service.SnippetService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -25,6 +28,9 @@ public class UserController {
     @Autowired
     private UserService userService;
     
+    @Autowired
+    private SnippetService snippetService;
+
     @GetMapping("/settings")
     public ResponseEntity<?> getUserSettings(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
@@ -202,6 +208,101 @@ public class UserController {
         }
     }
     
+    @GetMapping("/snippets")
+    public ResponseEntity<?> getUserSnippets(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
+            return ResponseEntity.badRequest().body(createErrorResponse("Authentication required"));
+        }
+        
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        
+        try {
+            List<Snippet> snippets = snippetService.getUserSnippets(userPrincipal.getUserId());
+            return ResponseEntity.ok(snippets);
+        } catch (Exception e) {
+            logger.error("Failed to get snippets for user: {}", userPrincipal.getUsername(), e);
+            return ResponseEntity.internalServerError()
+                .body(createErrorResponse("Failed to retrieve snippets"));
+        }
+    }
+    
+    @PostMapping("/snippets")
+    public ResponseEntity<?> saveUserSnippet(@RequestBody Map<String, String> request, 
+                                            Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
+            return ResponseEntity.badRequest().body(createErrorResponse("Authentication required"));
+        }
+        
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        
+        String title = request.get("title");
+        String code = request.get("code");
+        String language = request.get("language");
+        String input = request.get("input");
+        
+        // Validate request
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(createErrorResponse("Code is required"));
+        }
+        
+        if (language == null || language.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(createErrorResponse("Language is required"));
+        }
+        
+        // Limit code length
+        if (code.length() > 50000) { // 50KB limit
+            return ResponseEntity.badRequest().body(createErrorResponse("Code too long (max 50KB)"));
+        }
+        
+        try {
+            Snippet snippet = snippetService.saveUserSnippet(
+                userPrincipal.getUserId(), 
+                title != null ? title : "Untitled Snippet", 
+                code, 
+                language,
+                input
+            );
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Snippet saved successfully");
+            response.put("snippet", snippet);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Failed to save snippet for user: {}", userPrincipal.getUsername(), e);
+            return ResponseEntity.internalServerError()
+                .body(createErrorResponse("Failed to save snippet"));
+        }
+    }
+    
+    @DeleteMapping("/snippets/{snippetId}")
+    public ResponseEntity<?> deleteUserSnippet(@PathVariable String snippetId, 
+                                              Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
+            return ResponseEntity.badRequest().body(createErrorResponse("Authentication required"));
+        }
+        
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        
+        try {
+            boolean deleted = snippetService.deleteUserSnippet(userPrincipal.getUserId(), snippetId);
+            
+            if (deleted) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "Snippet deleted successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.error("Failed to delete snippet {} for user: {}", snippetId, userPrincipal.getUsername(), e);
+            return ResponseEntity.internalServerError()
+                .body(createErrorResponse("Failed to delete snippet"));
+        }
+    }
+
     private Map<String, Object> createErrorResponse(String message) {
         Map<String, Object> error = new HashMap<>();
         error.put("error", true);

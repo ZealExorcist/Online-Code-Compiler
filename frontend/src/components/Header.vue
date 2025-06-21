@@ -19,9 +19,11 @@
             <span class="username">{{ username }}</span>
             <div class="avatar">{{ userInitial }}</div>
             <span class="dropdown-arrow">▼</span>
-          </div>
-            <div v-if="showUserMenu" class="user-dropdown">
-            <SettingsComponent @settings-updated="handleSettingsUpdate" />
+          </div>            <div v-if="showUserMenu" class="user-dropdown">
+            <SettingsComponent 
+              @settings-updated="handleSettingsUpdate"
+              @load-snippet="handleLoadSnippet" 
+            />
             <div class="dropdown-item" @click="logout">
               🚪 Logout
             </div>
@@ -68,15 +70,18 @@ export default {
   methods: {
     toggleUserMenu() {
       this.showUserMenu = !this.showUserMenu
-    },
-    logout() {
+    },    logout() {
       authService.logout()
       this.showUserMenu = false
-      this.$router.push('/')
-    },
-    handleSettingsUpdate(settings) {
+      // Reload the page to reset all state
+      window.location.reload()
+    },    handleSettingsUpdate(settings) {
       console.log('Settings updated:', settings)
-      // Close user menu when settings are updated
+      // Don't close user menu when settings are updated to prevent modal from closing
+      // this.showUserMenu = false
+    },
+    handleLoadSnippet(snippet) {
+      this.$emit('load-snippet', snippet)
       this.showUserMenu = false
     }
   },
