@@ -48,7 +48,12 @@
 
         <div v-else class="auth-buttons">
           <router-link to="/login" class="auth-button login-button">
+            <span class="button-icon">👤</span>
             Sign In
+          </router-link>
+          <router-link to="/login?mode=signup" class="auth-button signup-button">
+            <span class="button-icon">✨</span>
+            Sign Up
           </router-link>
         </div>
       </div>
@@ -917,6 +922,85 @@ export default {
     opacity: 0;
     transform: translateX(100%);
   }
+}
+
+/* Auth Buttons Styles */
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.auth-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.auth-button:hover::before {
+  left: 100%;
+}
+
+.button-icon {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.auth-button:hover .button-icon {
+  transform: scale(1.1);
+}
+
+.login-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.login-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.signup-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.signup-button:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.signup-button:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 768px) {

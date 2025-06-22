@@ -64,18 +64,19 @@
 
         <div v-if="error" class="error-message">
           {{ error }}
-        </div>
-
-        <button type="submit" :disabled="loading" class="auth-button">
+        </div>        <button type="submit" :disabled="loading" class="auth-submit-button">
           <span v-if="loading" class="loading-spinner"></span>
-          {{ isLogin ? 'Sign In' : 'Sign Up' }}
+          <span v-else class="button-content">
+            <span class="button-icon">{{ isLogin ? '🚀' : '✨' }}</span>
+            {{ isLogin ? 'Sign In' : 'Sign Up' }}
+          </span>
         </button>
       </form>
 
-      <div class="auth-switch">
-        <p>
+      <div class="auth-switch">        <p>
           {{ isLogin ? "Don't have an account?" : 'Already have an account?' }}
           <button @click="toggleMode" class="switch-button">
+            <span class="switch-icon">{{ isLogin ? '➕' : '👤' }}</span>
             {{ isLogin ? 'Sign Up' : 'Sign In' }}
           </button>
         </p>
@@ -83,14 +84,13 @@
 
       <div class="auth-divider">
         <span>or</span>
-      </div>
-
-      <div class="guest-access">
+      </div>      <div class="guest-access">
         <button @click="continueAsGuest" class="guest-button">
+          <span class="guest-icon">👻</span>
           Continue as Guest
         </button>
         <p class="guest-note">
-          Limited functionality without authentication
+          🔒 Limited functionality • ⚡ No rate limits • 🎯 Quick start
         </p>
       </div>
     </div>
@@ -181,11 +181,17 @@ export default {
       this.$router.push('/')
     }
   },
-
   mounted() {
     // Check if user is already authenticated
     if (authService.isAuthenticated()) {
       this.$router.push('/')
+      return
+    }
+    
+    // Check URL parameters for signup mode
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('mode') === 'signup') {
+      this.isLogin = false
     }
   }
 }
@@ -285,31 +291,71 @@ export default {
   border-radius: 6px;
 }
 
-.auth-button {
-  padding: 12px 24px;
+.auth-submit-button {
+  padding: 16px 32px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  min-height: 56px;
 }
 
-.auth-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+.auth-submit-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s;
 }
 
-.auth-button:disabled {
-  opacity: 0.6;
+.auth-submit-button:hover::before {
+  left: 100%;
+}
+
+.auth-submit-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.auth-submit-button:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.auth-submit-button:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+  background: linear-gradient(135deg, #a0a0a0 0%, #808080 100%);
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.button-icon {
+  font-size: 18px;
+  transition: transform 0.3s ease;
+}
+
+.auth-submit-button:hover .button-icon {
+  transform: scale(1.1) rotate(10deg);
 }
 
 .loading-spinner {
@@ -327,7 +373,13 @@ export default {
 
 .auth-switch {
   text-align: center;
-  margin-top: 20px;
+  margin: 24px 0;
+}
+
+.auth-switch p {
+  color: #718096;
+  font-size: 14px;
+  margin: 0;
 }
 
 .switch-button {
@@ -336,7 +388,47 @@ export default {
   color: #667eea;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  margin-left: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.switch-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 20px;
+}
+
+.switch-button:hover::before {
+  opacity: 1;
+}
+
+.switch-button:hover {
+  color: #5a6fd8;
+  transform: translateY(-1px);
+}
+
+.switch-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.switch-button:hover .switch-icon {
+  transform: scale(1.2);
 }
 
 .auth-divider {
@@ -367,24 +459,62 @@ export default {
 }
 
 .guest-button {
-  padding: 10px 20px;
-  background: #f7fafc;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
   color: #2d3748;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.guest-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(45, 55, 72, 0.05), transparent);
+  transition: left 0.5s;
+}
+
+.guest-button:hover::before {
+  left: 100%;
 }
 
 .guest-button:hover {
-  background: #edf2f7;
+  background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
   border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  color: #1a202c;
+}
+
+.guest-icon {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.guest-button:hover .guest-icon {
+  transform: scale(1.1) rotate(-10deg);
 }
 
 .guest-note {
   font-size: 12px;
   color: #718096;
-  margin-top: 8px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 </style>
