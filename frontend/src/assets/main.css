@@ -1,5 +1,102 @@
 @import './base.css';
 
+/* Global Theme Variables */
+:root {
+  /* Dark theme (default) */
+  --bg-primary: #1e1e2f;
+  --bg-secondary: #2d3748;
+  --bg-tertiary: #1a202c;
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;
+  --text-muted: #a0aec0;
+  --border-color: #4a5568;
+  --accent-color: #667eea;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  
+  /* Modal and overlay */
+  --modal-bg: #ffffff;
+  --modal-text: #2d3748;
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  
+  /* Dropdown and UI elements */
+  --dropdown-bg: #ffffff;
+  --dropdown-text: #2d3748;
+  --dropdown-hover: #f7fafc;
+  
+  /* Toast notifications */
+  --toast-bg: #ffffff;
+  --toast-text: #2d3748;
+  --toast-border: #e2e8f0;
+  --toast-shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --text-primary: #2d3748;
+  --text-secondary: #4a5568;
+  --text-muted: #6c757d;
+  --border-color: #e2e8f0;
+  --accent-color: #667eea;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  
+  /* Modal and overlay */
+  --modal-bg: #ffffff;
+  --modal-text: #2d3748;
+  --overlay-bg: rgba(0, 0, 0, 0.3);
+  
+  /* Dropdown and UI elements */
+  --dropdown-bg: #ffffff;
+  --dropdown-text: #2d3748;
+  --dropdown-hover: #f7fafc;
+  
+  /* Toast notifications */
+  --toast-bg: #ffffff;
+  --toast-text: #2d3748;
+  --toast-border: #e2e8f0;
+  --toast-shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --bg-primary: #1e1e2f;
+  --bg-secondary: #2d3748;
+  --bg-tertiary: #1a202c;
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;
+  --text-muted: #a0aec0;
+  --border-color: #4a5568;
+  --accent-color: #667eea;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  
+  /* Modal and overlay */
+  --modal-bg: #2d3748;
+  --modal-text: #ffffff;
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+  
+  /* Dropdown and UI elements */
+  --dropdown-bg: #2d3748;
+  --dropdown-text: #ffffff;
+  --dropdown-hover: #4a5568;
+  
+  /* Toast notifications */
+  --toast-bg: #2d3748;
+  --toast-text: #ffffff;
+  --toast-border: #4a5568;
+  --toast-shadow: rgba(0, 0, 0, 0.3);
+}
+
 #app {
   width: 100vw;
   height: 100vh;
@@ -32,5 +129,55 @@ a,
   #app {
     width: 100vw;
     height: 100vh;
+  }
+}
+
+/* Global notification styles */
+.simple-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  border: 1px solid var(--toast-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px var(--toast-shadow);
+  animation: slideInRight 0.3s ease-out;
+  max-width: 400px;
+}
+
+.simple-notification-success {
+  border-left: 4px solid var(--success-color);
+}
+
+.simple-notification-error {
+  border-left: 4px solid var(--error-color);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.notification-message {
+  font-weight: 500;
+}
+
+@keyframes slideInRight {
+  from { 
+    transform: translateX(100%); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateX(0); 
+    opacity: 1; 
   }
 }

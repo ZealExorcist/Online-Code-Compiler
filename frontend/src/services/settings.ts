@@ -8,16 +8,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 export interface UserSettings {
   theme: string
   fontSize: string
-  fontFamily: string
   enableAutoComplete: boolean
   enableLineNumbers: boolean
   enableFolding: boolean
   defaultLanguage: string
   enableKeyboardShortcuts: boolean
   tabSize: number
-  insertSpaces: boolean
-  wordWrap: boolean
-  minimap: boolean
   colorScheme: string
   maxExecutionTime: number
   maxOutputSize: number
@@ -167,24 +163,18 @@ export class SettingsService {
         console.error('Failed to parse cached settings:', e)
       }
     }
-    return this.getDefaultSettings()
-  }
+    return this.getDefaultSettings()  }
 
   // Get default settings
-  getDefaultSettings(): UserSettings {
-    return {
+  getDefaultSettings(): UserSettings {    return {
       theme: 'dark',
       fontSize: '14px',
-      fontFamily: 'JetBrains Mono, Monaco, "Courier New", monospace',
       enableAutoComplete: true,
       enableLineNumbers: true,
       enableFolding: true,
       defaultLanguage: 'python',
       enableKeyboardShortcuts: true,
       tabSize: 4,
-      insertSpaces: true,
-      wordWrap: false,
-      minimap: false,
       colorScheme: 'oneDark',
       maxExecutionTime: 30,
       maxOutputSize: 10240,
@@ -202,17 +192,12 @@ export class SettingsService {
       // Apply theme
       if (settings.theme && editorInstance.updateTheme) {
         editorInstance.updateTheme(settings.theme)
-      }
-
-      // Apply font settings
-      if (settings.fontSize || settings.fontFamily) {
+      }      // Apply font settings
+      if (settings.fontSize) {
         const editorElement = editorInstance.view?.dom
         if (editorElement) {
           if (settings.fontSize) {
             editorElement.style.fontSize = settings.fontSize
-          }
-          if (settings.fontFamily) {
-            editorElement.style.fontFamily = settings.fontFamily
           }
         }
       }

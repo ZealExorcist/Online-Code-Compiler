@@ -9,17 +9,10 @@
         </select>
       </div>
       <div class="toolbar-center">
-        <div class="editor-settings">
-          <button @click="toggleWordWrap" :class="['setting-btn', { active: editorSettings.wordWrap }]" title="Toggle Word Wrap">
-            📝 Wrap
-          </button>
-          <button @click="toggleMinimap" :class="['setting-btn', { active: editorSettings.minimap }]" title="Toggle Minimap">
-            🗺️ Map
-          </button>
-          <button @click="toggleInsertSpaces" :class="['setting-btn', { active: editorSettings.insertSpaces }]" title="Toggle Insert Spaces">
-            {{ editorSettings.insertSpaces ? '␣' : '→' }} {{ editorSettings.insertSpaces ? 'Spaces' : 'Tabs' }}
-          </button>
-        </div>
+        <button @click="saveSnippet" class="save-snippet-btn" :disabled="!code.trim()">
+          <i class="icon">💾</i>
+          Save Snippet
+        </button>
       </div>
       <div class="toolbar-right">
         <button @click="runCode" :disabled="isLoading" class="btn btn-run">
@@ -55,6 +48,10 @@ export default {
     isLoading: {
       type: Boolean,
       default: false
+    },
+    settings: {
+      type: Object,
+      default: () => ({})
     }
   },  data() {
     return {
@@ -63,12 +60,6 @@ export default {
       currentLanguage: this.language,
       isChangingLanguage: false,
       languageChangeTimer: null,
-      editorSettings: {
-        wordWrap: false,
-        minimap: true,
-        insertSpaces: true,
-        tabSize: 4
-      },
       languages: [
         { id: 'python', name: 'Python' },
         { id: 'java', name: 'Java' },
@@ -85,7 +76,9 @@ export default {
     }
   },
   mounted() {
-    this.initEditor()
+    this.$nextTick(() => {
+      this.initEditor()
+    })
   },
   beforeUnmount() {
     if (this.languageChangeTimer) {
@@ -106,6 +99,14 @@ export default {
       if (this.editor) {
         this.editor.updateLanguage(newLanguage)
       }
+    },
+    settings: {
+      handler(newSettings, oldSettings) {
+        if (this.editor && newSettings) {
+          this.editor.updateSettings(newSettings)
+        }
+      },
+      deep: true
     }
   },
   methods: {
@@ -114,15 +115,17 @@ export default {
         this.editor = createEditor(this.$refs.editorContainer, {
           doc: this.code,
           language: this.currentLanguage,
-          wordWrap: this.editorSettings.wordWrap,
-          minimap: this.editorSettings.minimap,
-          insertSpaces: this.editorSettings.insertSpaces,
-          tabSize: this.editorSettings.tabSize,
+          colorScheme: this.settings?.colorScheme || 'oneDark',
+          fontSize: this.settings?.fontSize || '14px',
+          tabSize: this.settings?.tabSize || 4,
           onChange: (value) => {
             this.$emit('code-change', value)
           },
           onRun: () => {
             this.runCode()
+          },
+          onSave: () => {
+            this.saveSnippet()
           }
         })
 
@@ -159,24 +162,9 @@ export default {
     runCode() {
       this.$emit('run-code')
     },
-    toggleWordWrap() {
-      this.editorSettings.wordWrap = !this.editorSettings.wordWrap
-      if (this.editor) {
-        this.editor.updateWordWrap(this.editorSettings.wordWrap)
-      }
-    },
-    toggleMinimap() {
-      this.editorSettings.minimap = !this.editorSettings.minimap
-      if (this.editor) {
-        this.editor.updateMinimap(this.editorSettings.minimap)
-      }
-    },
-    toggleInsertSpaces() {
-      this.editorSettings.insertSpaces = !this.editorSettings.insertSpaces
-      if (this.editor) {
-        this.editor.updateIndentConfig(this.editorSettings.insertSpaces, this.editorSettings.tabSize)
-      }
-    },
+    saveSnippet() {
+      this.$emit('save-snippet')
+    }
   }
 }
 </script>
@@ -186,8 +174,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e1e;
-  border-right: 1px solid #3c3c3c;
+  border-right: 1px solid var(--border-color);
 }
 
 .editor-toolbar {
@@ -195,8 +182,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #252526;
-  border-bottom: 1px solid #3c3c3c;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .toolbar-left {
@@ -210,31 +197,38 @@ export default {
   align-items: center;
 }
 
-.editor-settings {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.setting-btn {
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #5a5a5a;
-  border-radius: 4px;
-  background-color: #3c3c3c;
-  color: #d4d4d4;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.setting-btn:hover {
-  background-color: #4a4a4a;
-}
-
-.setting-btn.active {
-  background-color: #007acc;
-  border-color: #007acc;
+.save-snippet-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.save-snippet-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.save-snippet-btn:disabled {
+  background: #4a5568;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.save-snippet-btn .icon {
+  font-size: 16px;
 }
 
 .toolbar-right {
@@ -243,9 +237,9 @@ export default {
 }
 
 .language-selector {
-  background-color: #3c3c3c;
-  color: #d4d4d4;
-  border: 1px solid #5a5a5a;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 0.5rem;
   font-size: 0.9rem;
@@ -254,7 +248,7 @@ export default {
 
 .language-selector:focus {
   outline: none;
-  border-color: #007acc;
+  border-color: var(--accent-color);
 }
 
 .btn {
@@ -273,7 +267,7 @@ export default {
 }
 
 .btn-run {
-  background-color: #28a745;
+  background-color: var(--success-color);
   color: white;
 }
 
@@ -293,11 +287,29 @@ export default {
 .editor-wrapper {
   flex: 1;
   position: relative;
+  height: 100%;
 }
 
 .codemirror-editor {
   height: 100%;
   width: 100%;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.codemirror-editor .cm-editor {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.codemirror-editor .cm-gutters {
+  border: none !important;
+  border-right: none !important;
+}
+
+.codemirror-editor .cm-scroller {
+  border: none !important;
 }
 
 .editor-loading {
@@ -306,14 +318,14 @@ export default {
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #d4d4d4;
+  color: var(--text-primary);
 }
 
 .editor-loading .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #3c3c3c;
-  border-top: 4px solid #007acc;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--accent-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;

@@ -1,6 +1,8 @@
-<template>
-  <div class="home">
-    <CompilerInterface />
+<template>  <div class="home">
+    <CompilerInterface 
+      @theme-changed="$emit('theme-changed', $event)" 
+      @show-notification="$emit('show-notification', $event)"
+    />
   </div>
 </template>
 

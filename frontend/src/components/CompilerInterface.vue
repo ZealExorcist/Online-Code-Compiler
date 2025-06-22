@@ -1,19 +1,24 @@
 <template>
   <div class="compiler-interface">
-    <Header @load-snippet="handleLoadSnippet" />
+    <Header @load-snippet="handleLoadSnippet" @theme-changed="$emit('theme-changed', $event)" @settings-updated="handleSettingsUpdate" />
     
     <!-- Loading State for Snippet -->
     <div v-if="isLoadingSnippet" class="snippet-loading">
       <div class="loading-spinner"></div>
       <p>Loading shared code...</p>
     </div>
-      <!-- Action Bar -->
+    
+    <!-- Action Bar -->
     <div class="action-bar">
       <div class="left-actions">
         <LoadComponent @code-loaded="handleCodeLoaded" />
       </div>
       <div class="center-actions">
         <UpgradeComponent @tier-updated="handleTierUpdated" />
+        <button @click="toggleInputSection" :class="['input-toggle-btn', { active: showInputSection }]">
+          <i class="icon">{{ showInputSection ? '📥' : '📤' }}</i>
+          {{ showInputSection ? 'Hide Input' : 'Show Input' }}
+        </button>
       </div>
       <div class="right-actions">
         <ShareComponent 
@@ -21,32 +26,43 @@
           :language="selectedLanguage" 
           :input="currentInput"
         />
-      </div>    </div>
+      </div>
+    </div>
     
     <div class="main-content">
       <div class="editor-section" :style="{ width: editorWidth + '%' }">
         <CodeEditor 
           :code="currentCode" 
           :language="selectedLanguage"
+          :settings="settings"
           @code-change="handleCodeChange"
           @language-change="handleLanguageChange"
           @run-code="executeCode"
+          @save-snippet="saveSnippet"
           :isLoading="isExecuting"
         />
-        <div class="editor-actions">
-          <button @click="saveSnippet" class="save-snippet-btn" :disabled="!currentCode.trim()">
-            <i class="icon">💾</i>
-            Save Snippet
-          </button>
+        
+        <!-- Input Section -->
+        <div v-if="showInputSection" class="input-section">
+          <div class="input-header">
+            <label for="program-input">Program Input</label>
+            <span class="input-info">💡 Provide input for your program (if needed)</span>
+          </div>
+          <textarea
+            id="program-input"
+            v-model="currentInput"
+            placeholder="Enter input for your program here... (one line per input)"
+            class="input-textarea"
+            rows="3"
+          ></textarea>
         </div>
       </div>
       <div class="resizer" @mousedown="startResize"></div>
-      <div class="output-section" :style="{ width: (100 - editorWidth) + '%' }">        <OutputPanel 
+      <div class="output-section" :style="{ width: (100 - editorWidth) + '%' }">
+        <OutputPanel 
           :output="executionOutput"
           :isLoading="isExecuting"
-          :needsInput="needsInput"
           @clear-output="clearOutput"
-          @send-input="handleSendInput"
         />
       </div>
     </div>
@@ -103,6 +119,8 @@ import ShareComponent from './ShareComponent.vue'
 import LoadComponent from './LoadComponent.vue'
 import UpgradeComponent from './UpgradeComponent.vue'
 import { executeCode, loadSharedCode, saveSnippet } from '../services/api'
+import settingsService from '../services/settings'
+import authService from '../services/auth'
 
 export default {
   name: 'CompilerInterface',  components: {
@@ -125,20 +143,31 @@ export default {
       selectedLanguage: 'python',
       currentInput: '',
       executionOutput: null,
-      isExecuting: false,      isLoadingSnippet: false,
+      isExecuting: false,
+      isLoadingSnippet: false,
       showSaveModal: false,
       isSaving: false,
       saveModalData: {
         title: ''
-      },      editorWidth: 50, // Percentage width for the editor
+      },
+      editorWidth: 50, // Percentage width for the editor
       isResizing: false,
-      needsInput: false
+      showInputSection: false, // Input section is hidden by default
+      settings: {
+        theme: 'dark',
+        colorScheme: 'oneDark',
+        fontSize: '14px',
+        fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
+        tabSize: 4
+      } // Initialize with default settings
     }
   },
   async mounted() {
     if (this.snippetId) {
       await this.loadSnippet()
     }
+    // Load user settings if authenticated
+    await this.loadUserSettings()
   },
   watch: {
     snippetId: {
@@ -159,7 +188,7 @@ export default {
         // Show success message
         this.$nextTick(() => {
           const title = data.title || 'Untitled'
-          console.log(`Loaded shared code: ${title} (${data.language})`)
+          // Snippet loaded successfully
         })
       } catch (error) {
         console.error('Failed to load snippet:', error)
@@ -169,11 +198,28 @@ export default {
       }
     },    handleCodeChange(newCode) {
       this.currentCode = newCode
-      // Detect if the code might need input
-      this.needsInput = this.detectNeedsInput(newCode, this.selectedLanguage)
-    },handleLanguageChange(newLanguage) {
+    },    handleLanguageChange(newLanguage) {
       this.selectedLanguage = newLanguage
       this.currentCode = this.getDefaultCode(newLanguage)
+    },
+    
+    handleSettingsUpdate(newSettings) {
+      this.settings = { ...this.settings, ...newSettings }
+    },
+    
+    async loadUserSettings() {
+      try {
+        if (authService.isAuthenticated()) {
+          const userSettings = await settingsService.getUserSettings()
+          this.settings = { ...this.settings, ...userSettings }
+        } else {
+          const cachedSettings = settingsService.getCachedSettings()
+          this.settings = { ...this.settings, ...cachedSettings }
+        }
+      } catch (error) {
+        const cachedSettings = settingsService.getCachedSettings()
+        this.settings = { ...this.settings, ...cachedSettings }
+      }
     },
     handleCodeLoaded(loadedData) {
       this.currentCode = loadedData.code
@@ -259,7 +305,6 @@ class Program {
       return defaults[language] || `// ${language} code here`
     },
     handleTierUpdated(newTier) {
-      console.log(`Tier updated to: ${newTier}`)
       // You can add any additional logic here, like refreshing user info
     },    async saveSnippet() {
       if (!this.currentCode.trim()) return
@@ -315,13 +360,81 @@ class Program {
     },
 
     showSuccessNotification(message) {
-      // You can implement a toast notification system here
-      alert(message) // Temporary fallback
+      // Create a simple styled notification that matches the theme
+      this.createNotification(message, 'success')
     },
 
     showErrorNotification(message) {
-      // You can implement a toast notification system here
-      alert(message) // Temporary fallback
+      // Create a simple styled notification that matches the theme
+      this.createNotification(message, 'error')
+    },
+    
+    createNotification(message, type) {
+      const notification = document.createElement('div')
+      notification.className = `simple-notification simple-notification-${type}`
+      notification.innerHTML = `
+        <div class="notification-content">
+          <span class="notification-icon">${type === 'success' ? '✅' : '❌'}</span>
+          <span class="notification-message">${message}</span>
+        </div>
+      `
+      
+      // Add styles
+      const style = document.createElement('style')
+      style.textContent = `
+        .simple-notification {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 10000;
+          background: var(--toast-bg);
+          color: var(--toast-text);
+          border: 1px solid var(--toast-border);
+          border-radius: 8px;
+          padding: 16px;
+          box-shadow: 0 4px 12px var(--toast-shadow);
+          animation: slideInRight 0.3s ease-out;
+          max-width: 400px;
+        }
+        .simple-notification-success {
+          border-left: 4px solid var(--success-color);
+        }
+        .simple-notification-error {
+          border-left: 4px solid var(--error-color);
+        }
+        .notification-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .notification-icon {
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+        .notification-message {
+          font-weight: 500;
+        }
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `
+      
+      document.head.appendChild(style)
+      document.body.appendChild(notification)
+      
+      // Remove notification after 4 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideInRight 0.3s ease-out reverse'
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification)
+          }
+          if (style.parentNode) {
+            style.parentNode.removeChild(style)
+          }
+        }, 300)
+      }, 4000)
     },
     handleLoadSnippet(snippet) {
       this.currentCode = snippet.code || ''
@@ -358,30 +471,9 @@ class Program {
       document.removeEventListener('mousemove', this.handleResize)
       document.removeEventListener('mouseup', this.stopResize)
     },
-    handleSendInput(input) {
-      console.log('Sending input to program:', input)
-      // For now, we'll append the input to the current input field
-      // In a real implementation, this would be sent to the running process
-      this.currentInput = this.currentInput ? this.currentInput + '\n' + input : input
-      this.needsInput = false
-      
-      // Re-execute with the new input
-      this.executeCode()
-    },
-    detectNeedsInput(code, language) {
-      // Simple detection of input requirements based on common patterns
-      const inputPatterns = {
-        python: /input\s*\(/,
-        java: /Scanner|System\.in\.read|Console\.readLine/,
-        cpp: /cin\s*>>/,
-        c: /scanf|getchar|gets/,
-        javascript: /prompt\s*\(/,
-        csharp: /Console\.ReadLine|Console\.Read/
-      }
-      
-      const pattern = inputPatterns[language.toLowerCase()]
-      return pattern && pattern.test(code)
-    },
+    toggleInputSection() {
+      this.showInputSection = !this.showInputSection
+    }
   },
   beforeUnmount() {
     // Clean up resize listeners
@@ -396,6 +488,8 @@ class Program {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .snippet-loading {
@@ -404,15 +498,15 @@ class Program {
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e9ecef;
-  border-top: 4px solid #007bff;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--accent-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
@@ -425,7 +519,7 @@ class Program {
 
 .snippet-loading p {
   margin: 0;
-  color: #6c757d;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -434,8 +528,8 @@ class Program {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
   gap: 10px;
 }
 
@@ -449,6 +543,40 @@ class Program {
 .center-actions {
   flex: 1;
   justify-content: center;
+}
+
+.input-toggle-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.input-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.input-toggle-btn.active {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.input-toggle-btn.active:hover {
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.input-toggle-btn .icon {
+  font-size: 16px;
 }
 
 .main-content {
@@ -465,14 +593,14 @@ class Program {
 
 .resizer {
   width: 4px;
-  background: #4a5568;
+  background: var(--border-color);
   cursor: col-resize;
   transition: background-color 0.2s;
   flex-shrink: 0;
 }
 
 .resizer:hover {
-  background: #667eea;
+  background: var(--accent-color);
 }
 
 .output-section {
@@ -481,47 +609,57 @@ class Program {
   min-width: 0; /* Allow shrinking */
 }
 
-.editor-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 20px;
-  background: #2d3748;
-  border-bottom: 1px solid #4a5568;
-  gap: 10px;
+/* Input Section Styles */
+.input-section {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px 20px;
 }
 
-.save-snippet-btn {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
+.input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.input-header label {
+  color: var(--text-primary);
   font-weight: 500;
+  font-size: 14px;
+}
+
+.input-info {
+  color: var(--text-muted);
+  font-size: 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.3s ease;
-  min-width: 120px;
-  justify-content: center;
+  gap: 4px;
 }
 
-.save-snippet-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+.input-textarea {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--text-primary);
+  font-family: 'Fira Code', Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 200px;
 }
 
-.save-snippet-btn:disabled {
-  background: #4a5568;
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-  box-shadow: none;
+.input-textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.save-snippet-btn .icon {
-  font-size: 16px;
+.input-textarea::placeholder {
+  color: var(--text-muted);
 }
 
 /* Save Snippet Modal Styles */
@@ -556,27 +694,29 @@ class Program {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #374151;
+  color: var(--modal-text);
 }
 
 .form-input {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #d1d5db;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
+  background: var(--modal-bg);
+  color: var(--modal-text);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #48bb78;
+  border-color: var(--success-color);
   box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
 }
 
 .snippet-preview {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px;
   margin-top: 16px;
@@ -600,12 +740,12 @@ class Program {
 
 .code-length {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .code-preview {
-  background: #1f2937;
-  color: #f9fafb;
+  background: var(--editor-bg);
+  color: var(--editor-text);
   padding: 12px;
   border-radius: 6px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -640,13 +780,13 @@ class Program {
 }
 
 .btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--bg-secondary);
+  color: var(--modal-text);
+  border: 1px solid var(--border-color);
 }
 
 .btn-cancel:hover {
-  background: #e5e7eb;
+  background: var(--bg-tertiary);
 }
 
 .btn-save {
@@ -672,7 +812,7 @@ class Program {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -681,7 +821,7 @@ class Program {
 }
 
 .modal-content {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -694,13 +834,14 @@ class Program {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+  color: var(--modal-text);
 }
 
 .close-btn {
@@ -708,7 +849,7 @@ class Program {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-muted);
   padding: 0;
   width: 30px;
   height: 30px;
@@ -720,7 +861,7 @@ class Program {
 }
 
 .close-btn:hover {
-  background: #e5e7eb;
+  background: var(--bg-secondary);
 }
 
 .modal-body {

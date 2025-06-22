@@ -1,10 +1,8 @@
 <template>
   <div class="output-panel">
     <div class="output-header">
-      <h3>Output</h3>      <div class="output-controls">
-        <button @click="toggleInputPanel" class="btn btn-input" :class="{ active: showInputPanel }">
-          ⌨️ Input
-        </button>
+      <h3>Output</h3>
+      <div class="output-controls">
         <button @click="clearOutput" class="btn btn-clear" :disabled="!output">
           🗑️ Clear
         </button>
@@ -60,38 +58,14 @@
           <p class="no-output">Program executed successfully with no output.</p>
         </div>
       </div>
-      
-      <!-- Input Section -->
-      <div v-if="needsInput || showInputPanel" class="input-section">
-        <div class="input-header">
-          <span class="icon">⌨️</span>
-          <span class="label">Program Input</span>
-          <button @click="clearInput" class="clear-input-btn" title="Clear Input">
-            🗑️
-          </button>
-        </div>
-        <div class="input-area">
-          <textarea 
-            v-model="userInput"
-            placeholder="Enter input for your program here..."
-            class="input-textarea"
-            @keydown.ctrl.enter="sendInput"
-            @keydown.meta.enter="sendInput"
-          ></textarea>
-          <div class="input-actions">
-            <button @click="sendInput" :disabled="!userInput.trim()" class="send-input-btn">
-              Send Input (Ctrl+Enter)
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'OutputPanel',  props: {
+  name: 'OutputPanel',
+  props: {
     output: {
       type: Object,
       default: null
@@ -99,32 +73,11 @@ export default {
     isLoading: {
       type: Boolean,
       default: false
-    },
-    needsInput: {
-      type: Boolean,
-      default: false
     }
   },
-  data() {
-    return {
-      showInputPanel: false,
-      userInput: ''
-    }
-  },  methods: {
+  methods: {
     clearOutput() {
       this.$emit('clear-output')
-    },
-    toggleInputPanel() {
-      this.showInputPanel = !this.showInputPanel
-    },
-    sendInput() {
-      if (this.userInput.trim()) {
-        this.$emit('send-input', this.userInput)
-        this.userInput = ''
-      }
-    },
-    clearInput() {
-      this.userInput = ''
     }
   }
 }
@@ -136,8 +89,8 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e1e;
-  border-left: 1px solid #3c3c3c;
+  background-color: var(--editor-bg);
+  border-left: 1px solid var(--border-color);
 }
 
 .output-header {
@@ -145,13 +98,13 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background-color: #252526;
-  border-bottom: 1px solid #3c3c3c;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .output-header h3 {
   margin: 0;
-  color: #d4d4d4;
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
@@ -196,14 +149,14 @@ export default {
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #d4d4d4;
+  color: var(--text-primary);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #3c3c3c;
-  border-top: 4px solid #007acc;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--accent-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -216,7 +169,7 @@ export default {
 
 .empty-state {
   text-align: center;
-  color: #858585;
+  color: var(--text-muted);
   padding: 2rem;
 }
 
@@ -227,13 +180,13 @@ export default {
 
 .shortcuts {
   padding: 1rem;
-  background-color: #252526;
+  background-color: var(--bg-secondary);
   border-radius: 8px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid var(--border-color);
 }
 
 .output-result {
-  color: #d4d4d4;
+  color: var(--text-primary);
 }
 
 .output-section {
@@ -243,15 +196,15 @@ export default {
 }
 
 .output-section.success {
-  border: 1px solid #28a745;
+  border: 1px solid var(--success-color);
 }
 
 .output-section.error {
-  border: 1px solid #dc3545;
+  border: 1px solid var(--error-color);
 }
 
 .section-header {
-  background-color: #252526;
+  background-color: var(--bg-secondary);
   padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
@@ -262,12 +215,12 @@ export default {
 
 .success .section-header {
   background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
+  color: var(--success-color);
 }
 
 .error .section-header {
   background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  color: var(--error-color);
 }
 
 .execution-time,
@@ -278,7 +231,8 @@ export default {
 }
 
 .output-text {
-  background-color: #1e1e1e;
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
   padding: 1rem;
   margin: 0;
   white-space: pre-wrap;
@@ -294,116 +248,14 @@ export default {
   padding: 1rem;
   margin: 0;
   font-style: italic;
-  color: #858585;
-}
-
-.input-section {
-  background-color: #252526;
-  border-top: 1px solid #3c3c3c;
-  border-radius: 0 0 6px 6px;
-}
-
-.input-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #2d2d30;
-  border-bottom: 1px solid #3c3c3c;
-}
-
-.input-header .label {
-  flex: 1;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #d4d4d4;
-}
-
-.clear-input-btn {
-  background: none;
-  border: none;
-  color: #d4d4d4;
-  cursor: pointer;
-  padding: 0.2rem;
-  border-radius: 3px;
-  transition: background-color 0.2s;
-}
-
-.clear-input-btn:hover {
-  background-color: #3c3c3c;
-}
-
-.input-area {
-  padding: 1rem;
-}
-
-.input-textarea {
-  width: 100%;
-  min-height: 80px;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
-  border: 1px solid #3c3c3c;
-  border-radius: 4px;
-  padding: 0.5rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.9rem;
-  resize: vertical;
-}
-
-.input-textarea:focus {
-  outline: none;
-  border-color: #007acc;
-}
-
-.input-actions {
-  margin-top: 0.5rem;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.send-input-btn {
-  background-color: #007acc;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
-}
-
-.send-input-btn:hover:not(:disabled) {
-  background-color: #005a9e;
-}
-
-.send-input-btn:disabled {
-  background-color: #555;
-  cursor: not-allowed;
-}
-
-.btn-input {
-  background-color: #3c3c3c;
-  color: #d4d4d4;
-}
-
-.btn-input.active {
-  background-color: #007acc;
-  color: white;
-}
-
-.btn-input:hover {
-  background-color: #4a4a4a;
-}
-
-.btn-input.active:hover {
-  background-color: #005a9e;
+  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
   .output-panel {
     width: 100%;
     border-left: none;
-    border-top: 1px solid #3c3c3c;
+    border-top: 1px solid var(--border-color);
   }
 }
 </style>

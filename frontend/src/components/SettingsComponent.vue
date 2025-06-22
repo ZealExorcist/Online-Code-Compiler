@@ -1,11 +1,6 @@
 <template>  <div class="settings-component" :data-theme="currentTheme">
-    <button @click="showSettingsModal = true" class="settings-btn">
-      <i class="icon">⚙️</i>
-      Settings
-    </button>
-
     <!-- Settings Modal -->
-    <div v-if="showSettingsModal" class="modal-overlay" @click="closeModal">
+    <div class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>Settings</h3>
@@ -35,20 +30,17 @@
                   <option value="dark">Dark</option>
                   <option value="light">Light</option>
                 </select>
-              </div>
-
-              <div class="setting-group">
-                <label>Color Scheme</label>
+              </div>              <div class="setting-group">
+                <label>Editor Color Scheme</label>
                 <select v-model="settings.colorScheme" @change="updateSettings">
                   <option value="oneDark">One Dark</option>
                   <option value="oneLight">One Light</option>
+                  <option value="githubLight">GitHub Light</option>
                   <option value="monokai">Monokai</option>
-                  <option value="solarizedDark">Solarized Dark</option>
-                  <option value="solarizedLight">Solarized Light</option>
+                  <option value="vscodeDark">VS Code Dark</option>
+                  <option value="vscodeLight">VS Code Light</option>
                 </select>
-              </div>
-
-              <div class="setting-group">
+              </div>              <div class="setting-group">
                 <label>Font Size</label>
                 <select v-model="settings.fontSize" @change="updateSettings">
                   <option value="12px">12px</option>
@@ -60,55 +52,12 @@
               </div>
 
               <div class="setting-group">
-                <label>Font Family</label>
-                <select v-model="settings.fontFamily" @change="updateSettings">
-                  <option value="'Monaco', 'Menlo', 'Ubuntu Mono', monospace">Monaco</option>
-                  <option value="'Fira Code', monospace">Fira Code</option>
-                  <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                  <option value="'Consolas', monospace">Consolas</option>
-                </select>
-              </div>
-
-              <div class="setting-group">
                 <label>Tab Size</label>
                 <select v-model="settings.tabSize" @change="updateSettings">
                   <option :value="2">2 spaces</option>
                   <option :value="4">4 spaces</option>
                   <option :value="8">8 spaces</option>
                 </select>
-              </div>
-
-              <div class="setting-group checkbox-group">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    v-model="settings.insertSpaces" 
-                    @change="updateSettings"
-                  />
-                  Insert Spaces (instead of tabs)
-                </label>
-              </div>
-
-              <div class="setting-group checkbox-group">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    v-model="settings.wordWrap" 
-                    @change="updateSettings"
-                  />
-                  Word Wrap
-                </label>
-              </div>
-
-              <div class="setting-group checkbox-group">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    v-model="settings.minimap" 
-                    @change="updateSettings"
-                  />
-                  Show Minimap
-                </label>
               </div>
             </div>
 
@@ -145,53 +94,7 @@
                   />
                   Enable Input Panel
                 </label>
-              </div>            </div>
-
-            <!-- Snippets Settings -->
-            <div v-if="activeTab === 'snippets'" class="settings-section">
-              <h4>My Snippets</h4>
-              
-              <div v-if="isLoadingSnippets" class="loading-state">
-                <p>Loading snippets...</p>
-              </div>
-              
-              <div v-else-if="snippets.length === 0" class="empty-state">
-                <p>No snippets saved yet. Create and save your first snippet!</p>
-              </div>
-              
-              <div v-else class="snippets-list">
-                <div 
-                  v-for="snippet in snippets" 
-                  :key="snippet.id"
-                  class="snippet-item"
-                >
-                  <div class="snippet-header">
-                    <h6>{{ snippet.title || 'Untitled Snippet' }}</h6>
-                    <span class="snippet-language">{{ snippet.language }}</span>
-                  </div>
-                  <div class="snippet-meta">
-                    <span class="snippet-date">{{ formatDate(snippet.createdAt) }}</span>
-                    <span class="snippet-length">{{ snippet.code.length }} chars</span>
-                  </div>
-                  <div class="snippet-preview">
-                    <pre>{{ snippet.code.substring(0, 150) }}{{ snippet.code.length > 150 ? '...' : '' }}</pre>
-                  </div>
-                  <div class="snippet-actions">
-                    <button @click="loadSnippet(snippet)" class="load-snippet-btn">
-                      Load
-                    </button>
-                    <button @click="shareSnippet(snippet)" class="share-snippet-btn">
-                      Share
-                    </button>
-                    <button @click="deleteSnippet(snippet.id)" class="delete-snippet-btn">
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Account Settings -->
+              </div>            </div>            <!-- Account Settings -->
             <div v-if="activeTab === 'account'" class="settings-section">
               <h4>Account Settings</h4>
               
@@ -302,64 +205,27 @@
         </div>
       </div>
     </div>
-    
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-overlay delete-modal-overlay" @click="closeDeleteModal">
-      <div class="modal-content delete-modal-content" @click.stop>
-        <div class="modal-header delete-modal-header">
-          <h3>🗑️ Delete Snippet</h3>
-          <button @click="closeDeleteModal" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body delete-modal-body">
-          <div class="warning-icon">⚠️</div>
-          <div class="warning-content">
-            <h4>Are you sure you want to delete this snippet?</h4>
-            <p v-if="snippetToDelete">
-              <strong>"{{ snippetToDelete.title || 'Untitled Snippet' }}"</strong>
-            </p>
-            <p class="warning-text">This action cannot be undone. The snippet will be permanently removed from your account.</p>
-          </div>
-        </div>
-        <div class="modal-footer delete-modal-footer">
-          <button @click="closeDeleteModal" class="btn btn-cancel">
-            Cancel
-          </button>
-          <button @click="confirmDeleteSnippet" class="btn btn-delete" :disabled="isDeleting">
-            <span v-if="isDeleting">⏳ Deleting...</span>
-            <span v-else>🗑️ Delete Snippet</span>
-          </button>
-        </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script>
 import { getUserSettings, updateUserSettings, getUserProfile, changePassword, generateNewApiKey } from '../services/settings'
+import authService from '../services/auth'
 
 export default {
-  name: 'SettingsComponent',
-  data() {
+  name: 'SettingsComponent',  data() {
     return {
-      showSettingsModal: false,
-      activeTab: 'editor',
-      settings: {
+      activeTab: 'editor',      settings: {
         theme: 'dark',
         colorScheme: 'oneDark',
         fontSize: '14px',
-        fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
         tabSize: 4,
-        insertSpaces: true,
-        wordWrap: false,
-        minimap: false,
         maxExecutionTime: 30,
         maxOutputSize: 10240,
         enableInput: true,
         publicSnippets: false,
         shareByDefault: false
-      },      userProfile: null,
-      snippets: [],
-      isLoadingSnippets: false,
+      },userProfile: null,
       passwordForm: {
         oldPassword: '',
         newPassword: '',
@@ -367,15 +233,11 @@ export default {
       },      tabs: [
         { id: 'editor', name: 'Editor' },
         { id: 'execution', name: 'Execution' },
-        { id: 'snippets', name: 'Snippets' },
         { id: 'account', name: 'Account' },
         { id: 'privacy', name: 'Privacy' }
-      ],      copied: false,
-      isRegenerating: false,
-      isChangingPassword: false,
+      ],copied: false,
+      isRegenerating: false,      isChangingPassword: false,
       isDeleting: false,
-      showDeleteModal: false,
-      snippetToDelete: null,
       successMessage: '',
       errorMessage: ''
     }
@@ -394,120 +256,63 @@ export default {
           document.documentElement.setAttribute('data-theme', newTheme)
         })
       }
-    }
+    }  },
+  mounted() {
+    this.loadSettings()
   },
-  methods: {
-    async loadSettings() {
+  methods: {    async loadSettings() {
       try {
-        const settings = await getUserSettings()
-        this.settings = { ...this.settings, ...settings }
+        if (authService.isAuthenticated()) {
+          const settings = await getUserSettings()
+          this.settings = { ...this.settings, ...settings }
+        } else {
+          // Load from localStorage for non-authenticated users
+          const cached = localStorage.getItem('user_settings')
+          if (cached) {
+            const cachedSettings = JSON.parse(cached)
+            this.settings = { ...this.settings, ...cachedSettings }
+          }
+        }
       } catch (error) {
         console.error('Failed to load settings:', error)
+        // Fall back to localStorage
+        const cached = localStorage.getItem('user_settings')
+        if (cached) {
+          try {
+            const cachedSettings = JSON.parse(cached)
+            this.settings = { ...this.settings, ...cachedSettings }
+          } catch (parseError) {
+            console.error('Failed to parse cached settings:', parseError)
+          }
+        }
       }
     },
 
     async loadUserProfile() {
-      try {
-        this.userProfile = await getUserProfile()
+      try {        this.userProfile = await getUserProfile()
       } catch (error) {
         console.error('Failed to load user profile:', error)
       }
-    },    async loadSnippets() {
-      this.isLoadingSnippets = true
+    },    async updateSettings() {
       try {
-        const response = await fetch('/api/user/snippets', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-            'Content-Type': 'application/json'
-          }
-        })
-        if (response.ok) {
-          this.snippets = await response.json()
+        // Always cache settings locally for immediate feedback
+        localStorage.setItem('user_settings', JSON.stringify(this.settings))
+        
+        // Try to save to server if authenticated
+        if (authService.isAuthenticated()) {
+          await updateUserSettings(this.settings)
+          this.showSuccess('Settings updated successfully!')
         } else {
-          console.error('Failed to load snippets:', response.statusText)
+          this.showSuccess('Settings saved locally!')
         }
-      } catch (error) {
-        console.error('Failed to load snippets:', error)
-      } finally {
-        this.isLoadingSnippets = false
-      }
-    },
-
-    loadSnippet(snippet) {
-      this.$emit('load-snippet', snippet)
-      this.closeModal()
-    },
-
-    async shareSnippet(snippet) {
-      try {
-        const response = await fetch('/api/share', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            code: snippet.code,
-            language: snippet.language,
-            title: snippet.title
-          })
-        })
-        if (response.ok) {
-          const result = await response.json()
-          navigator.clipboard.writeText(result.shareUrl)
-          this.showSuccess('Share link copied to clipboard!')
-        }
-      } catch (error) {
-        this.showError('Failed to share snippet')
-      }
-    },    async deleteSnippet(snippetId) {
-      const snippet = this.snippets.find(s => s.id === snippetId)
-      this.snippetToDelete = snippet
-      this.showDeleteModal = true
-    },
-
-    closeDeleteModal() {
-      this.showDeleteModal = false
-      this.snippetToDelete = null
-      this.isDeleting = false
-    },
-
-    async confirmDeleteSnippet() {
-      if (!this.snippetToDelete) return
-      
-      this.isDeleting = true
-      
-      try {
-        const response = await fetch(`/api/user/snippets/${this.snippetToDelete.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        })
-        if (response.ok) {
-          this.snippets = this.snippets.filter(s => s.id !== this.snippetToDelete.id)
-          this.showSuccess('Snippet deleted successfully!')
-          this.closeDeleteModal()
-        } else {
-          const errorData = await response.json()
-          this.showError('Failed to delete snippet: ' + (errorData.message || 'Server error'))
-        }
-      } catch (error) {
-        console.error('Failed to delete snippet:', error)
-        this.showError('Failed to delete snippet')
-      } finally {
-        this.isDeleting = false
-      }
-    },
-
-    async updateSettings() {
-      try {
-        await updateUserSettings(this.settings)
-        this.showSuccess('Settings updated successfully!')
+        
         this.$emit('settings-updated', this.settings)
         // Don't close modal when settings are updated
       } catch (error) {
-        this.showError('Failed to update settings: ' + error.message)
+        console.error('Settings update error:', error)
+        // Even if server update fails, keep local settings
+        this.showError('Settings saved locally but server update failed: ' + error.message)
+        this.$emit('settings-updated', this.settings)
       }
     },
 
@@ -577,20 +382,16 @@ export default {
       setTimeout(() => {
         this.errorMessage = ''
       }, 5000)
-    },
-
-    closeModal() {
-      this.showSettingsModal = false
+    },    closeModal() {
       this.activeTab = 'editor'
       this.successMessage = ''
       this.errorMessage = ''
+      this.$emit('close')
     }
   },
 
-  async mounted() {
-    await this.loadSettings()
+  async mounted() {    await this.loadSettings()
     await this.loadUserProfile()
-    await this.loadSnippets()
   }
 }
 </script>
