@@ -2,12 +2,12 @@
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-left">
-        <p>&copy; 2025 Online Compiler. Built with Vue.js & Spring Boot.</p>
+        <p>&copy; 2025 Online Code Compiler.</p>
       </div>
       <div class="footer-right">
-        <a href="https://github.com" target="_blank" class="footer-link">GitHub</a>
+        <a href="https://github.com" target="https://github.com/ZealExorcist/Online-Code-Compiler" class="footer-link">GitHub</a>
         <span class="separator">|</span>
-        <a href="#" class="footer-link">Documentation</a>
+        <a href="https://zealexorcist.gitbook.io/zealexorcist-blog/project-docs/online-code-compiler" class="footer-link">Documentation</a>
         <span class="separator">|</span>
         <span class="status">
           <span class="status-dot" :class="{ 'online': isOnline }"></span>
