@@ -43,7 +43,7 @@ For detailed setup instructions, see [SETUP.md](SETUP.md)
 
 ## Documentation
 
-📖 **[Complete Documentation](doc.md)** - Comprehensive guide including:
+📖 **[Complete Documentation](https://zealexorcist.gitbook.io/zealexorcist-blog/project-docs/online-code-compiler)** - Comprehensive guide including:
 - Architecture overview
 - Setup & installation
 - API documentation  
