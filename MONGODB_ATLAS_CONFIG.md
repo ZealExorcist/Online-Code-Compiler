@@ -1,7 +1,7 @@
 # MongoDB Atlas Configuration Summary
 
 ## Connection Details
-- **Connection String**: `mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority`
+- **Connection String**: `Add your MongoDB uri here`
 - **Database Name**: `online-compiler`
 - **Collections Used**:
   - `users` - User accounts and settings
@@ -22,7 +22,7 @@
 spring:
   data:
     mongodb:
-      uri: mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority
+      uri: Add your MongoDB uri here
       database: online-compiler
 ```
 
@@ -31,7 +31,7 @@ spring:
 spring:
   data:
     mongodb:
-      uri: mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority
+      uri: Add your MongoDB uri here
       database: online-compiler
 ```
 

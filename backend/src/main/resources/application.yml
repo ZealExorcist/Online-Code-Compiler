@@ -9,7 +9,7 @@ spring:
   # MongoDB Configuration Only
   data:
     mongodb:
-      uri: mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority
+      uri: #replace with your uri
       database: online-compiler
   # Disable JPA and H2 completely
   autoconfigure:

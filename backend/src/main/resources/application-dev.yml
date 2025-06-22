@@ -3,7 +3,7 @@ spring:
   # MongoDB Configuration for development
   data:
     mongodb:
-      uri: mongodb+srv://rohannayakanti:2004%40Atlas@clg.fbq0zx8.mongodb.net/online-compiler?retryWrites=true&w=majority
+      uri: #add your mongoDB uri here
       database: online-compiler
 
 # Development-specific application settings
