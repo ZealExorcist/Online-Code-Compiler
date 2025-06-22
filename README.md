@@ -1,71 +1,64 @@
-# Online Compiler Application
+# Online Compiler
 
-A web-based code compiler and executor that supports multiple programming languages with secure Docker-based sandboxing.
+A secure, multi-language online code compiler with Docker-based sandboxing.
 
-## Architecture
+## Quick Start
 
-- **Frontend**: Vue.js 3 with Monaco Editor for code editing
-- **Backend**: Spring Boot Java REST API
-- **Execution Environment**: Docker containers for secure code execution
-- **Sharing**: Unique snippet IDs for code sharing without authentication
+### Automated Setup (Recommended)
 
-## Supported Languages
+**Windows:**
+```cmd
+setup.bat
+```
 
-- Python
-- C/C++
-- Java
-- JavaScript
-- Go
-- Ruby
-- R
-- Rust
-- C#
-- HTML/CSS (preview mode)
+**Linux/macOS:**
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+### Manual Setup
+
+```bash
+# Backend
+cd backend
+./mvnw spring-boot:run
+
+# Frontend  
+cd frontend
+npm install
+npm run dev
+```
+
+For detailed setup instructions, see [SETUP.md](SETUP.md)
 
 ## Features
 
-- Real-time code editing with syntax highlighting
-- Secure code execution in isolated Docker containers
+- 11+ programming languages supported
+- Secure Docker container execution
+- Real-time code editing with Monaco Editor
 - Code sharing via unique URLs
-- Multiple language support
-- Resource limiting and security hardening
+- RESTful API with JWT authentication
+- Modern Vue.js frontend
 
-## Development Setup
+## Documentation
 
-### Prerequisites
+📖 **[Complete Documentation](doc.md)** - Comprehensive guide including:
+- Architecture overview
+- Setup & installation
+- API documentation  
+- Security details
+- Deployment guide
 
-- JDK 17+
-- Node.js (LTS)
-- Docker
-- Git
+## Quick Links
 
-### Local Development
+- **Features**: [features.txt](features.txt) - Detailed feature list
+- **Tasks**: [tasks.md](tasks.md) - Development task breakdown
+- **Architecture**: [main.md](main.md) - Technical architecture details
 
-1. **Backend**: 
-   ```bash
-   cd backend
-   ./mvnw spring-boot:run
-   ```
+## Supported Languages
 
-2. **Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-## Deployment
-
-- **Frontend**: Deployed on Vercel
-- **Backend**: Deployed on Render with Docker support
-
-## Security
-
-- Docker containers run with no network access
-- Resource limits (CPU, memory, execution time)
-- Non-root user execution
-- Input validation and sanitization
-- Rate limiting on API endpoints
+Python • Java • C/C++ • JavaScript • TypeScript • Go • Rust • Ruby • R • C#
 
 ## License
 

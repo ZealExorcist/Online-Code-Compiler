@@ -3,6 +3,14 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
+// Create a separate axios instance for auth that doesn't have auto-logout interceptor
+const authApi = axios.create({
+  baseURL: API_BASE_URL + '/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
 interface LoginResponse {
   token: string
   apiKey: string
@@ -41,11 +49,10 @@ export class AuthService {
     }
     return headers
   }
-
   // Login user
   async login(username: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/api/auth/login`, {
+      const response = await authApi.post<LoginResponse>('/auth/login', {
         username,
         password
       })
@@ -65,11 +72,10 @@ export class AuthService {
       throw new Error(error.response?.data?.message || 'Login failed')
     }
   }
-
   // Register user
   async register(username: string, email: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/api/auth/register`, {
+      const response = await authApi.post<LoginResponse>('/auth/register', {
         username,
         email,
         password
@@ -106,13 +112,12 @@ export class AuthService {
   isAuthenticated(): boolean {
     return !!(this.token || this.apiKey)
   }
-
   // Get current user info
   async getCurrentUser(): Promise<any> {
     try {
       const headers = this.getAuthHeaders()
       
-      const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
+      const response = await authApi.get('/auth/me', {
         headers: headers
       })
       return response.data
@@ -120,11 +125,10 @@ export class AuthService {
       throw new Error(error.response?.data?.message || 'Failed to get user info')
     }
   }
-
   // Refresh API key
   async refreshApiKey(): Promise<string> {
     try {
-      const response = await axios.post<{ apiKey: string }>(`${API_BASE_URL}/api/auth/refresh-api-key`, {}, {
+      const response = await authApi.post<{ apiKey: string }>('/auth/refresh-api-key', {}, {
         headers: this.getAuthHeaders()
       })
       
@@ -136,11 +140,10 @@ export class AuthService {
       throw new Error(error.response?.data?.message || 'Failed to refresh API key')
     }
   }
-
   // Validate current authentication
   async validateAuth(): Promise<boolean> {
     try {
-      const response = await axios.get<{ valid: boolean }>(`${API_BASE_URL}/api/auth/validate`, {
+      const response = await authApi.get<{ valid: boolean }>('/auth/validate', {
         headers: this.getAuthHeaders()
       })
       return response.data.valid

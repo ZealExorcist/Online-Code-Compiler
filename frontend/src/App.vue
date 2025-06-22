@@ -9,6 +9,7 @@
 
 <script>
 import { getUserSettings } from './services/settings'
+import authService from './services/auth'
 
 export default {
   name: 'App',
@@ -21,22 +22,32 @@ export default {
     handleThemeChange(newTheme) {
       this.currentTheme = newTheme
       document.documentElement.setAttribute('data-theme', newTheme)
+      // Cache theme for anonymous users
+      if (!authService.isAuthenticated()) {
+        localStorage.setItem('compiler-theme', newTheme)
+      }
     },
     handleShowNotification(message, type) {
       // This would need to be passed to a global notification system
       // For now, let's create a simple implementation
-      console.log('Notification:', message, type)
+      // TODO: Implement proper toast notification system
     }
   },
   async mounted() {
     // Load user's theme preference
     try {
-      const settings = await getUserSettings()
-      this.currentTheme = settings.theme || 'dark'
+      if (authService.isAuthenticated()) {
+        const settings = await getUserSettings()
+        this.currentTheme = settings.theme || 'dark'
+      } else {
+        // For anonymous users, try to get cached theme from localStorage
+        const cachedTheme = localStorage.getItem('compiler-theme')
+        this.currentTheme = cachedTheme || 'dark'
+      }
       // Apply theme to document root for global CSS variables
       document.documentElement.setAttribute('data-theme', this.currentTheme)
     } catch (error) {
-      console.log('Using default theme (dark)')
+      // Silent fallback to default theme
       this.currentTheme = 'dark'
       document.documentElement.setAttribute('data-theme', 'dark')
     }

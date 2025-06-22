@@ -32,6 +32,14 @@
             <div class="dropdown-item" @click="showSnippetsModal">
               📄 My Snippets
             </div>
+            <div class="dropdown-item" @click="showUpgradeModal = true">
+              ⭐ Upgrade Plan
+            </div>
+            <UpgradeComponent 
+              v-if="showUpgradeModal"
+              @tier-updated="handleTierUpdated"
+              @close="showUpgradeModal = false"
+            />
             <div class="dropdown-item" @click="logout">
               🚪 Logout
             </div>
@@ -153,17 +161,20 @@
 <script>
 import authService from '../services/auth'
 import SettingsComponent from './SettingsComponent.vue'
+import UpgradeComponent from './UpgradeComponent.vue'
 
 export default {
   name: 'Header',
   components: {
-    SettingsComponent
+    SettingsComponent,
+    UpgradeComponent
   },
   data() {
     return {
       languageCount: 10,
       showUserMenu: false,
       showSettingsModal: false,
+      showUpgradeModal: false,
       logoUrl: '/logo.png', // You can add your logo here
       showSnippetsModalOpen: false,
       snippets: [],
@@ -348,7 +359,13 @@ export default {
           this.toasts = this.toasts.filter(t => t.id !== id)
         }, 300) // Wait for animation
       }
-    }
+    },
+    
+    handleTierUpdated(newTier) {
+      // Handle tier update - could refresh user info, emit event, etc.
+      this.showUpgradeModal = false
+      this.showUserMenu = false
+    },
   },
   mounted() {
     // Close user menu when clicking outside

@@ -57,6 +57,41 @@
           </div>
           <p class="no-output">Program executed successfully with no output.</p>
         </div>
+        
+        <!-- Rate Limit and User Info -->
+        <div v-if="output.metadata" class="output-section info">
+          <div class="section-header">
+            <span class="icon">ℹ️</span>
+            <span class="label">Execution Info</span>
+          </div>
+          <div class="metadata-info">
+            <div class="metadata-row" v-if="output.metadata.authenticated !== undefined">
+              <span class="metadata-label">Status:</span>
+              <span class="metadata-value" :class="{ 'authenticated': output.metadata.authenticated, 'anonymous': !output.metadata.authenticated }">
+                {{ output.metadata.authenticated ? '🔐 Authenticated' : '🌐 Anonymous' }}
+              </span>
+            </div>
+            <div class="metadata-row" v-if="output.metadata.tier">
+              <span class="metadata-label">Tier:</span>
+              <span class="metadata-value tier-badge" :class="'tier-' + output.metadata.tier.toLowerCase()">
+                {{ output.metadata.tier }}
+              </span>
+            </div>
+            <div class="metadata-row" v-if="output.metadata.tierDescription">
+              <span class="metadata-label">Plan:</span>
+              <span class="metadata-value">{{ output.metadata.tierDescription }}</span>
+            </div>
+            <div class="metadata-row" v-if="output.metadata.remainingRequests !== undefined">
+              <span class="metadata-label">Remaining Requests:</span>
+              <span class="metadata-value" :class="{ 'low-requests': output.metadata.remainingRequests <= 2 }">
+                {{ output.metadata.remainingRequests }} this hour
+              </span>
+            </div>
+            <div v-if="!output.metadata.authenticated && output.metadata.remainingRequests <= 2" class="upgrade-hint">
+              💡 <strong>Sign up</strong> to get higher limits and faster execution!
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -203,6 +238,10 @@ export default {
   border: 1px solid var(--error-color);
 }
 
+.output-section.info {
+  border: 1px solid var(--info-color, #17a2b8);
+}
+
 .section-header {
   background-color: var(--bg-secondary);
   padding: 0.5rem 1rem;
@@ -221,6 +260,11 @@ export default {
 .error .section-header {
   background-color: rgba(220, 53, 69, 0.1);
   color: var(--error-color);
+}
+
+.info .section-header {
+  background-color: rgba(23, 162, 184, 0.1);
+  color: var(--info-color, #17a2b8);
 }
 
 .execution-time,
@@ -249,6 +293,85 @@ export default {
   margin: 0;
   font-style: italic;
   color: var(--text-muted);
+}
+
+.metadata-info {
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+}
+
+.metadata-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.metadata-row:last-child {
+  margin-bottom: 0;
+}
+
+.metadata-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.metadata-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.metadata-value.authenticated {
+  color: var(--success-color);
+}
+
+.metadata-value.anonymous {
+  color: var(--warning-color, #ffc107);
+}
+
+.metadata-value.low-requests {
+  color: var(--error-color);
+  font-weight: bold;
+}
+
+.tier-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.tier-badge.tier-anonymous {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: var(--warning-color, #ffc107);
+}
+
+.tier-badge.tier-basic {
+  background-color: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+}
+
+.tier-badge.tier-advanced {
+  background-color: rgba(23, 162, 184, 0.2);
+  color: var(--info-color, #17a2b8);
+}
+
+.tier-badge.tier-master {
+  background-color: rgba(123, 63, 228, 0.2);
+  color: #7b3fe4;
+}
+
+.upgrade-hint {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid var(--warning-color, #ffc107);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 @media (max-width: 768px) {

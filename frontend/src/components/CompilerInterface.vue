@@ -14,7 +14,10 @@
         <LoadComponent @code-loaded="handleCodeLoaded" />
       </div>
       <div class="center-actions">
-        <UpgradeComponent @tier-updated="handleTierUpdated" />
+        <CommandsComponent 
+          :language="selectedLanguage" 
+          @packages-installed="handlePackagesInstalled"
+        />
         <button @click="toggleInputSection" :class="['input-toggle-btn', { active: showInputSection }]">
           <i class="icon">{{ showInputSection ? '📥' : '📤' }}</i>
           {{ showInputSection ? 'Hide Input' : 'Show Input' }}
@@ -117,7 +120,7 @@ import OutputPanel from './OutputPanel.vue'
 import Footer from './Footer.vue'
 import ShareComponent from './ShareComponent.vue'
 import LoadComponent from './LoadComponent.vue'
-import UpgradeComponent from './UpgradeComponent.vue'
+import CommandsComponent from './CommandsComponent.vue'
 import { executeCode, loadSharedCode, saveSnippet } from '../services/api'
 import settingsService from '../services/settings'
 import authService from '../services/auth'
@@ -130,7 +133,7 @@ export default {
     Footer,
     ShareComponent,
     LoadComponent,
-    UpgradeComponent
+    CommandsComponent
   },
   props: {
     snippetId: {
@@ -213,10 +216,12 @@ export default {
           const userSettings = await settingsService.getUserSettings()
           this.settings = { ...this.settings, ...userSettings }
         } else {
+          // For anonymous users, only use cached settings - no API call
           const cachedSettings = settingsService.getCachedSettings()
           this.settings = { ...this.settings, ...cachedSettings }
         }
       } catch (error) {
+        console.warn('Failed to load user settings, using cached settings:', error)
         const cachedSettings = settingsService.getCachedSettings()
         this.settings = { ...this.settings, ...cachedSettings }
       }
@@ -304,8 +309,48 @@ class Program {
       }
       return defaults[language] || `// ${language} code here`
     },
-    handleTierUpdated(newTier) {
-      // You can add any additional logic here, like refreshing user info
+    
+    handlePackagesInstalled(installationData) {
+      // Show success notification
+      const { packages, commands, language, mode } = installationData
+      
+      // Handle different modes - predefined mode has packages, custom mode has commands
+      let items = []
+      if (mode === 'predefined' && packages && Array.isArray(packages)) {
+        items = packages
+      } else if (mode === 'custom' && commands && Array.isArray(commands)) {
+        items = commands
+      }
+      
+      const itemList = items.join(', ')
+      
+      // TODO: Show success notification here
+      
+      // Optionally, you could add a comment to the code editor about the installed packages
+      if (items.length > 0) {
+        const comment = this.getCommentSyntax(language)
+        const itemComment = `${comment} Installed ${mode === 'predefined' ? 'packages' : 'commands'}: ${itemList}\n`
+        
+        // Add comment at the top of the code if user wants
+        // this.currentCode = itemComment + this.currentCode
+      }
+    },
+    
+    getCommentSyntax(language) {
+      const commentSyntax = {
+        python: '#',
+        javascript: '//',
+        typescript: '//',
+        java: '//',
+        cpp: '//',
+        c: '//',
+        go: '//',
+        rust: '//',
+        csharp: '//',
+        ruby: '#',
+        r: '#'
+      }
+      return commentSyntax[language] || '#'
     },    async saveSnippet() {
       if (!this.currentCode.trim()) return
       

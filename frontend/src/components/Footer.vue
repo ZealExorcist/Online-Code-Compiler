@@ -52,9 +52,8 @@ export default {
           this.isOnline = data.status === 'online'
         } else {
           this.isOnline = false
-        }
-      } catch (error) {
-        console.log('Connection check failed:', error.message)
+        }      } catch (error) {
+        // Silent connection check failure
         this.isOnline = false
       }
     }

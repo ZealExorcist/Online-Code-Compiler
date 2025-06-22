@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Set;
 
 @RestController
@@ -35,20 +36,22 @@ public class ExecuteController {
     private UserService userService;
     
     @Value("${spring.profiles.active:}")
-    private String activeProfile;
-      @PostMapping("/execute")
+    private String activeProfile;    @PostMapping("/execute")
     public ResponseEntity<ExecuteResponse> executeCode(@RequestBody ExecuteRequest request, 
-                                                      Authentication authentication) {
+                                                      Authentication authentication,
+                                                      HttpServletRequest httpRequest) {
         String userId = null;
         String username = "anonymous";
         UserTier userTier = UserTier.BASIC; // Default tier for anonymous users
-        
-        // Get user info if authenticated
+        String rateLimitKey; // Key used for rate limiting
+          // Get user info if authenticated
         if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal) {
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
             userId = userPrincipal.getUserId();
             username = userPrincipal.getUsername();
-              // Get user's tier
+            rateLimitKey = userId; // Use user ID for authenticated users
+            
+            // Get user's tier
             User user = userService.getUserByUsername(username);
             if (user != null) {
                 try {
@@ -57,18 +60,25 @@ public class ExecuteController {
                     userTier = UserTier.BASIC;
                 }
             }
+        } else {
+            // For anonymous users, use IP address for rate limiting
+            rateLimitKey = "anon_" + getClientIpAddress(httpRequest);
+            // Anonymous users get more restrictive limits
+            userTier = UserTier.ANONYMOUS;
         }
 
-        // Check rate limiting for authenticated users
-        if (userId != null && rateLimitService.isRateLimited(userId, userTier)) {
-            int remaining = rateLimitService.getRemainingRequests(userId, userTier);
+        // Check rate limiting (applies to both authenticated and anonymous users)
+        if (rateLimitService.isRateLimited(rateLimitKey, userTier)) {
+            int remaining = rateLimitService.getRemainingRequests(rateLimitKey, userTier);
+            String message = userId != null ? 
+                "Rate limit exceeded. " + userTier.getDescription() + ". Remaining requests this hour: " + remaining :
+                "Rate limit exceeded for anonymous users. Please wait or sign up for higher limits. Remaining requests this hour: " + remaining;
             return ResponseEntity.status(429)
-                .body(ExecuteResponse.error("Rate limit exceeded. " + userTier.getDescription() + 
-                                          ". Remaining requests this hour: " + remaining));
+                .body(ExecuteResponse.error(message));
         }
 
-        logger.info("Received execution request for language: {} from user: {} (tier: {})", 
-                   request.getLanguage(), username, userTier);
+        logger.info("Received execution request for language: {} from user: {} (tier: {}, key: {})", 
+                   request.getLanguage(), username, userTier, rateLimitKey);
         
         // Validate request
         if (request.getCode() == null || request.getCode().trim().isEmpty()) {
@@ -99,13 +109,20 @@ public class ExecuteController {
                 request.getInput(),
                 userId
             );
-            
-            // Add tier information to response
+              // Add tier information to response
             if (userId != null) {
-                int remaining = rateLimitService.getRemainingRequests(userId, userTier);
+                int remaining = rateLimitService.getRemainingRequests(rateLimitKey, userTier);
                 response.setMetadata("tier", userTier.name());
                 response.setMetadata("tierDescription", userTier.getDescription());
                 response.setMetadata("remainingRequests", remaining);
+                response.setMetadata("authenticated", true);
+            } else {
+                // For anonymous users, also show rate limit info
+                int remaining = rateLimitService.getRemainingRequests(rateLimitKey, userTier);
+                response.setMetadata("tier", "ANONYMOUS");
+                response.setMetadata("tierDescription", "Anonymous access - Sign up for higher limits");
+                response.setMetadata("remainingRequests", remaining);
+                response.setMetadata("authenticated", false);
             }
             
             return ResponseEntity.ok(response);
@@ -121,10 +138,44 @@ public class ExecuteController {
                 .body(ExecuteResponse.error("Internal server error"));
         }
     }
-    
-    @GetMapping("/languages")
+      @GetMapping("/languages")
     public ResponseEntity<Set<String>> getSupportedLanguages() {
         Set<String> languages = executionService.getSupportedLanguages();
         return ResponseEntity.ok(languages);
+    }
+    
+    /**
+     * Get the client's IP address, considering various proxy headers
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String[] headerNames = {
+            "X-Forwarded-For",
+            "X-Real-IP", 
+            "Proxy-Client-IP",
+            "WL-Proxy-Client-IP",
+            "HTTP_X_FORWARDED_FOR",
+            "HTTP_X_FORWARDED",
+            "HTTP_X_CLUSTER_CLIENT_IP",
+            "HTTP_CLIENT_IP",
+            "HTTP_FORWARDED_FOR",
+            "HTTP_FORWARDED",
+            "HTTP_VIA",
+            "REMOTE_ADDR"
+        };
+        
+        for (String headerName : headerNames) {
+            String ip = request.getHeader(headerName);
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+                // X-Forwarded-For can contain multiple IPs, take the first one
+                if (ip.contains(",")) {
+                    ip = ip.split(",")[0].trim();
+                }
+                return ip;
+            }
+        }
+        
+        // Fallback to remote address
+        String remoteAddr = request.getRemoteAddr();
+        return remoteAddr != null ? remoteAddr : "unknown";
     }
 }

@@ -27,9 +27,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, logout user
-      authService.logout()
-      window.location.href = '/login'
+      // Only logout if we have a token/apiKey and it's actually invalid
+      // Don't logout for anonymous users trying to access protected endpoints
+      const authHeaders = authService.getAuthHeaders()
+      if (authHeaders.Authorization || authHeaders['X-API-Key']) {
+        // We have auth credentials but got 401, so they're invalid
+        authService.logout()
+        window.location.href = '/login'
+      }
+      // For anonymous users (no auth headers), just reject without logout
     }
     return Promise.reject(error)
   }
@@ -104,5 +110,39 @@ export async function getUserProfile() {
     return response.data
   } catch (error: any) {
     throw new Error(error.response?.data?.error || error.response?.data?.message || 'Failed to get user profile')
+  }
+}
+
+export async function installPackages(language: string, packages: string[], commands: string[]) {
+  try {
+    const response = await api.post('/install-packages', {
+      language,
+      packages,
+      commands
+    })
+    return response.data
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      throw new Error('Rate limit exceeded. Please wait before trying again.')
+    }
+    throw new Error(error.response?.data?.error || error.response?.data?.message || 'Package installation failed')
+  }
+}
+
+export async function executeCustomCommands(language: string, commands: string[]) {
+  try {
+    const response = await api.post('/execute-commands', {
+      language,
+      commands
+    })
+    return response.data
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      throw new Error('Rate limit exceeded. Please wait before trying again.')
+    }
+    if (error.response?.status === 403) {
+      throw new Error('Custom commands require Advanced or Master tier subscription.')
+    }
+    throw new Error(error.response?.data?.error || error.response?.data?.message || 'Command execution failed')
   }
 }

@@ -12,10 +12,10 @@
     <artifactId>online-compiler</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>online-compiler</name>
-    <description>Online Compiler with Docker-based execution</description>
-    <properties>
+    <description>Online Compiler with Docker-based execution</description>    <properties>
         <java.version>17</java.version>
-    </properties>    <dependencies>
+        <spring-security.version>6.5.1</spring-security.version>
+    </properties><dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

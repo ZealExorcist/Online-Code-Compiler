@@ -51,6 +51,10 @@ jspm_packages/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.example
+.env.development
+.env.production
+.env.test
 
 # Backend
 backend/target/
@@ -170,3 +174,13 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Personal notes
+notes.md
+todo.md
+TODO.md
+NOTES.md
+
+# Build artifacts specific to this project
+/backend/target/
+/frontend/dist/

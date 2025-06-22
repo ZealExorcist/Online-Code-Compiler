@@ -309,19 +309,21 @@ export default {
     await this.loadSettings()
     await this.loadUserInfo()
   },
-  methods: {
-    async loadSettings() {
+  methods: {    async loadSettings() {
       try {
-        this.settings = await settingsService.getUserSettings()
+        if (authService.isAuthenticated()) {
+          this.settings = await settingsService.getUserSettings()
+        } else {
+          console.warn('Cannot load settings for unauthenticated user')
+          this.settings = settingsService.getDefaultSettings()
+        }
       } catch (error) {
         console.error('Failed to load settings:', error)
         this.settings = settingsService.getDefaultSettings()
       }
     },    async loadUserInfo() {
       try {
-        console.log('Loading user info...')
         this.userInfo = await authService.getCurrentUser()
-        console.log('User info loaded:', this.userInfo)
         
         if (!this.userInfo.apiKey) {
           console.warn('No API key found in user info')
@@ -343,11 +345,8 @@ export default {
         console.error('Failed to update settings:', error)
         this.showMessage('Failed to update settings', 'error')
       }
-    },    async refreshApiKey() {
-      try {
-        console.log('Refreshing API key...')
+    },    async refreshApiKey() {      try {
         const newApiKey = await authService.refreshApiKey()
-        console.log('New API key received:', newApiKey)
         
         this.userInfo.apiKey = newApiKey
         this.showMessage('API key refreshed successfully', 'success')
