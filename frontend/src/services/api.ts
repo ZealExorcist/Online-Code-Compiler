@@ -147,6 +147,58 @@ export async function executeCustomCommands(language: string, commands: string[]
   }
 }
 
+export async function getAIInsights(code: string, language: string, userApiKey?: string) {
+  console.log('🔍 getAIInsights called with:', {
+    codeLength: code.length,
+    language,
+    hasUserApiKey: !!userApiKey,
+    userApiKeyLength: userApiKey?.length || 0,
+    userApiKeyPreview: userApiKey ? `${userApiKey.substring(0, 10)}...` : 'NONE'
+  })
+  
+  try {
+    const requestData = {
+      code,
+      language,
+      userApiKey
+    }
+    
+    console.log('📡 Making POST request to /ai-insights with:', {
+      ...requestData,
+      userApiKey: requestData.userApiKey ? `${requestData.userApiKey.substring(0, 10)}...` : 'NONE'
+    })
+    
+    const response = await api.post('/ai-insights', requestData)
+    
+    console.log('✅ AI Insights API response:', {
+      status: response.status,
+      data: response.data
+    })
+    
+    return response.data
+  } catch (error: any) {
+    console.error('❌ AI Insights API error:', {
+      error,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: error.config
+    })
+    
+    if (error.response?.status === 429) {
+      throw new Error('AI Insights rate limit exceeded. Please wait before trying again.')
+    }
+    if (error.response?.status === 400) {
+      throw new Error('AI analysis temporarily unavailable. Please check your API key and try again later.')
+    }
+    if (error.response?.status === 401) {
+      throw new Error('Invalid API key. Please check your Gemini API key in Settings.')
+    }
+    throw new Error(error.response?.data?.message || error.response?.data || 'AI Insights service temporarily unavailable')
+  }
+}
+
 export async function getShareLimits() {
   try {
     const response = await api.get('/share/limits')

@@ -245,10 +245,13 @@ public class User {
         private int maxExecutionTime = 30; // seconds
         private int maxOutputSize = 1024 * 10; // 10KB
         private boolean enableInput = true;
-        
-        // Privacy Settings
+          // Privacy Settings
         private boolean publicSnippets = false;
         private boolean shareByDefault = false;
+        
+        // AI Settings
+        private boolean enableErrorHighlighting = true;
+        private String geminiApiKey = "";
         
         // Getters and Setters
         public String getTheme() { return theme; }
@@ -301,8 +304,13 @@ public class User {
         
         public boolean isPublicSnippets() { return publicSnippets; }
         public void setPublicSnippets(boolean publicSnippets) { this.publicSnippets = publicSnippets; }
-        
-        public boolean isShareByDefault() { return shareByDefault; }
+          public boolean isShareByDefault() { return shareByDefault; }
         public void setShareByDefault(boolean shareByDefault) { this.shareByDefault = shareByDefault; }
+        
+        public boolean isEnableErrorHighlighting() { return enableErrorHighlighting; }
+        public void setEnableErrorHighlighting(boolean enableErrorHighlighting) { this.enableErrorHighlighting = enableErrorHighlighting; }
+        
+        public String getGeminiApiKey() { return geminiApiKey; }
+        public void setGeminiApiKey(String geminiApiKey) { this.geminiApiKey = geminiApiKey; }
     }
 }

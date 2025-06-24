@@ -67,6 +67,9 @@
         <OutputPanel 
           :output="executionOutput"
           :isLoading="isExecuting"
+          :code="currentCode"
+          :language="selectedLanguage"
+          :settings="settings"
           @clear-output="clearOutput"
         />
       </div>
@@ -210,7 +213,14 @@ export default {
     },
     
     handleSettingsUpdate(newSettings) {
+      console.log('🔧 CompilerInterface: Settings updated:', {
+        newSettings,
+        oldSettings: this.settings,
+        geminiApiKeyBefore: this.settings.geminiApiKey,
+        geminiApiKeyAfter: newSettings.geminiApiKey
+      })
       this.settings = { ...this.settings, ...newSettings }
+      console.log('🔧 CompilerInterface: Final merged settings:', this.settings)
     },
     
     async loadUserSettings() {
@@ -665,6 +675,8 @@ class Program {
   display: flex;
   flex-direction: column;
   min-width: 0; /* Allow shrinking */
+  height: 100%;
+  overflow: hidden; /* Let OutputPanel handle its own scrolling */
 }
 
 /* Input Section Styles */

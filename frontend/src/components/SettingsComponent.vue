@@ -25,14 +25,12 @@
               <h4>Editor Settings</h4>
               
               <div class="setting-group">
-                <label>Theme</label>
-                <select v-model="settings.theme" @change="updateSettings">
+                <label>Theme</label>                <select v-model="settings.theme">
                   <option value="dark">Dark</option>
                   <option value="light">Light</option>
                 </select>
               </div>              <div class="setting-group">
-                <label>Editor Color Scheme</label>
-                <select v-model="settings.colorScheme" @change="updateSettings">
+                <label>Editor Color Scheme</label>                <select v-model="settings.colorScheme">
                   <option value="oneDark">One Dark</option>
                   <option value="oneLight">One Light</option>
                   <option value="githubLight">GitHub Light</option>
@@ -41,8 +39,7 @@
                   <option value="vscodeLight">VS Code Light</option>
                 </select>
               </div>              <div class="setting-group">
-                <label>Font Size</label>
-                <select v-model="settings.fontSize" @change="updateSettings">
+                <label>Font Size</label>                <select v-model="settings.fontSize">
                   <option value="12px">12px</option>
                   <option value="14px">14px</option>
                   <option value="16px">16px</option>
@@ -50,8 +47,7 @@
                   <option value="20px">20px</option>
                 </select>
               </div>              <div class="setting-group">
-                <label>Tab Size</label>
-                <select v-model="settings.tabSize" @change="updateSettings">
+                <label>Tab Size</label>                <select v-model="settings.tabSize">
                   <option :value="2">2 spaces</option>
                   <option :value="4">4 spaces</option>
                   <option :value="8">8 spaces</option>
@@ -59,15 +55,19 @@
               </div>
 
               <div class="setting-group checkbox-group">
-                <label>
-                  <input 
+                <label>                  <input 
                     type="checkbox" 
-                    v-model="settings.enableErrorHighlighting" 
-                    @change="updateSettings"
+                    v-model="settings.enableErrorHighlighting"
                   />
                   Enable Error Highlighting
-                </label>
-                <small class="setting-help">Show syntax errors and warnings in real-time</small>
+                </label>                <small class="setting-help">Show syntax errors and warnings in real-time</small>
+              </div>
+              
+              <!-- Save Button for Editor Settings -->
+              <div class="save-section">
+                <button @click="saveEditorSettings" class="save-btn" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save Editor Settings' }}
+                </button>
               </div>
             </div>
 
@@ -76,8 +76,7 @@
               <h4>Execution Settings</h4>
               
               <div class="setting-group">
-                <label>Max Execution Time (seconds)</label>
-                <select v-model="settings.maxExecutionTime" @change="updateSettings">
+                <label>Max Execution Time (seconds)</label>                <select v-model="settings.maxExecutionTime">
                   <option :value="10">10 seconds</option>
                   <option :value="30">30 seconds</option>
                   <option :value="60">1 minute</option>
@@ -86,8 +85,7 @@
               </div>
 
               <div class="setting-group">
-                <label>Max Output Size (KB)</label>
-                <select v-model="settings.maxOutputSize" @change="updateSettings">
+                <label>Max Output Size (KB)</label>                <select v-model="settings.maxOutputSize">
                   <option :value="1024">1 KB</option>
                   <option :value="5120">5 KB</option>
                   <option :value="10240">10 KB</option>
@@ -96,15 +94,20 @@
               </div>
 
               <div class="setting-group checkbox-group">
-                <label>
-                  <input 
+                <label>                  <input 
                     type="checkbox" 
-                    v-model="settings.enableInput" 
-                    @change="updateSettings"
-                  />
-                  Enable Input Panel
+                    v-model="settings.enableInput"
+                  />Enable Input Panel
                 </label>
-              </div>            </div>            <!-- Account Settings -->
+              </div>
+              
+              <!-- Save Button for Execution Settings -->
+              <div class="save-section">
+                <button @click="saveExecutionSettings" class="save-btn" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save Execution Settings' }}
+                </button>
+              </div>
+            </div><!-- Account Settings -->
             <div v-if="activeTab === 'account'" class="settings-section">
               <h4>Account Settings</h4>
               
@@ -148,9 +151,7 @@
                 <h5>Gemini API Key</h5>
                 <div class="gemini-api-display">
                   <input 
-                    :type="showGeminiApiKey ? 'text' : 'password'"
-                    v-model="settings.geminiApiKey"
-                    @change="updateSettings"
+                    :type="showGeminiApiKey ? 'text' : 'password'"                    v-model="settings.geminiApiKey"
                     placeholder="Enter your Gemini API key for AI Insights"
                     class="gemini-api-input"
                   />
@@ -188,9 +189,15 @@
                     v-model="passwordForm.confirmPassword" 
                     placeholder="Confirm new password"
                   />
-                </div>
-                <button @click="changePassword" class="change-password-btn" :disabled="isChangingPassword">
+                </div>                <button @click="changePassword" class="change-password-btn" :disabled="isChangingPassword">
                   {{ isChangingPassword ? 'Changing...' : 'Change Password' }}
+                </button>
+              </div>
+              
+              <!-- Save Button for Account Settings -->
+              <div class="save-section">
+                <button @click="saveAccountSettings" class="save-btn" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save Account Settings' }}
                 </button>
               </div>
             </div>
@@ -200,25 +207,27 @@
               <h4>Privacy Settings</h4>
               
               <div class="setting-group checkbox-group">
-                <label>
-                  <input 
+                <label>                  <input 
                     type="checkbox" 
-                    v-model="settings.publicSnippets" 
-                    @change="updateSettings"
+                    v-model="settings.publicSnippets"
                   />
                   Make my snippets public by default
                 </label>
               </div>
 
               <div class="setting-group checkbox-group">
-                <label>
-                  <input 
+                <label>                  <input 
                     type="checkbox" 
-                    v-model="settings.shareByDefault" 
-                    @change="updateSettings"
-                  />
-                  Enable sharing by default
+                    v-model="settings.shareByDefault"
+                  />Enable sharing by default
                 </label>
+              </div>
+              
+              <!-- Save Button for Privacy Settings -->
+              <div class="save-section">
+                <button @click="savePrivacySettings" class="save-btn" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save Privacy Settings' }}
+                </button>
               </div>
             </div>
           </div>
@@ -265,8 +274,10 @@ export default {
         { id: 'account', name: 'Account' },
         { id: 'privacy', name: 'Privacy' }
       ],      copied: false,
-      isRegenerating: false,      isChangingPassword: false,
+      isRegenerating: false,
+      isChangingPassword: false,
       isDeleting: false,
+      isSaving: false,
       showGeminiApiKey: false,
       successMessage: '',
       errorMessage: ''
@@ -324,25 +335,84 @@ export default {
         console.error('Failed to load user profile:', error)
       }
     },    async updateSettings() {
+      console.log('💾 SettingsComponent: Updating settings:', {
+        currentSettings: this.settings,
+        geminiApiKey: this.settings.geminiApiKey ? `${this.settings.geminiApiKey.substring(0, 10)}...` : 'NONE',
+        geminiApiKeyLength: this.settings.geminiApiKey?.length || 0
+      })
+      
       try {
         // Always cache settings locally for immediate feedback
         localStorage.setItem('user_settings', JSON.stringify(this.settings))
+        console.log('💾 Settings cached locally')
         
         // Try to save to server if authenticated
         if (authService.isAuthenticated()) {
+          console.log('🔐 User is authenticated, saving to server...')
           await updateUserSettings(this.settings)
           this.showSuccess('Settings updated successfully!')
+          console.log('✅ Settings saved to server successfully')
         } else {
+          console.log('👤 User not authenticated, settings saved locally only')
           this.showSuccess('Settings saved locally!')
         }
         
+        console.log('📡 Emitting settings-updated event:', this.settings)
         this.$emit('settings-updated', this.settings)
         // Don't close modal when settings are updated
       } catch (error) {
-        console.error('Settings update error:', error)
+        console.error('❌ Settings update error:', error)
         // Even if server update fails, keep local settings
         this.showError('Settings saved locally but server update failed: ' + error.message)
         this.$emit('settings-updated', this.settings)
+      }
+    },
+
+    async saveEditorSettings() {
+      this.isSaving = true
+      try {
+        await this.updateSettings()
+        this.showSuccess('Editor settings saved successfully!')
+      } catch (error) {
+        this.showError('Failed to save editor settings: ' + error.message)
+      } finally {
+        this.isSaving = false
+      }
+    },
+
+    async saveExecutionSettings() {
+      this.isSaving = true
+      try {
+        await this.updateSettings()
+        this.showSuccess('Execution settings saved successfully!')
+      } catch (error) {
+        this.showError('Failed to save execution settings: ' + error.message)
+      } finally {
+        this.isSaving = false
+      }
+    },
+
+    async saveAccountSettings() {
+      this.isSaving = true
+      try {
+        await this.updateSettings()
+        this.showSuccess('Account settings saved successfully!')
+      } catch (error) {
+        this.showError('Failed to save account settings: ' + error.message)
+      } finally {
+        this.isSaving = false
+      }
+    },
+
+    async savePrivacySettings() {
+      this.isSaving = true
+      try {
+        await this.updateSettings()
+        this.showSuccess('Privacy settings saved successfully!')
+      } catch (error) {
+        this.showError('Failed to save privacy settings: ' + error.message)
+      } finally {
+        this.isSaving = false
       }
     },
 
@@ -571,6 +641,40 @@ export default {
   color: var(--text-primary);
   font-size: 18px;
   font-weight: 600;
+}
+
+.save-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .setting-group {

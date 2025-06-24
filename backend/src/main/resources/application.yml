@@ -40,6 +40,12 @@ app:
     password: admin123
     email: admin@compiler.com
 
+# Gemini AI Configuration
+gemini:
+  api:
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+    key: ${GEMINI_API_KEY:}
+
 logging:
   level:
     com.example.compiler: INFO
