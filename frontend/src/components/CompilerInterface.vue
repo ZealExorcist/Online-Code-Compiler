@@ -42,6 +42,8 @@
           @language-change="handleLanguageChange"
           @run-code="executeCode"
           @save-snippet="saveSnippet"
+          @file-downloaded="handleFileDownloaded"
+          @show-upgrade="handleShowUpgrade"
           :isLoading="isExecuting"
         />
         
@@ -124,6 +126,7 @@ import CommandsComponent from './CommandsComponent.vue'
 import { executeCode, loadSharedCode, saveSnippet } from '../services/api'
 import settingsService from '../services/settings'
 import authService from '../services/auth'
+import { eventBus } from '../services/eventBus.ts'
 
 export default {
   name: 'CompilerInterface',  components: {
@@ -235,6 +238,16 @@ export default {
       this.$nextTick(() => {
         alert(`Code loaded successfully!\nLanguage: ${loadedData.language}\nTitle: ${loadedData.title || 'Untitled'}`)
       })
+    },
+    
+    handleFileDownloaded(filename) {
+      // File download success is now handled by CodeEditor's modal
+      // This can be removed or used for additional logging if needed
+    },
+    
+    handleShowUpgrade() {
+      // Emit event to show upgrade modal via event bus
+      eventBus.emit('show-upgrade-modal')
     },
     async executeCode() {
       if (!this.currentCode.trim()) {

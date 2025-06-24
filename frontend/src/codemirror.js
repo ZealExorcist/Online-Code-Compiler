@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { autocompletion, closeBrackets, acceptCompletion, completionKeymap, completionStatus } from '@codemirror/autocomplete'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import { foldGutter, bracketMatching } from '@codemirror/language'
+import { linter, lintGutter } from '@codemirror/lint'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { githubLight } from '@uiw/codemirror-theme-github'
 import { monokai } from '@uiw/codemirror-theme-monokai'
@@ -15,11 +16,13 @@ import { javascript } from '@codemirror/lang-javascript'
 import { cpp } from '@codemirror/lang-cpp'
 import { go } from '@codemirror/lang-go'
 import { rust } from '@codemirror/lang-rust'
+import { errorDetector } from './services/errorDetector.js'
 
 // Configuration compartments for dynamic changes
 const languageConf = new Compartment()
 const themeConf = new Compartment()
 const fontConf = new Compartment()
+const linterConf = new Compartment()
 
 // Get theme extension for a given color scheme (independent of app theme)
 export function getThemeExtension(colorScheme) {
@@ -110,6 +113,23 @@ export function getLanguageExtension(lang) {
   }
 }
 
+// Create linter extension for a given language
+export function createLinterExtension(language) {
+  return linter((view) => {
+    const code = view.state.doc.toString()
+    const errors = errorDetector.detectErrors(code, language)
+    
+    return errors.map(error => ({
+      from: error.from,
+      to: error.to,
+      severity: error.severity,
+      message: error.message
+    }))
+  }, {
+    delay: 300 // Debounce linting by 300ms
+  })
+}
+
 // Create CodeMirror editor
 export function createEditor(parent, options = {}) {
   const {
@@ -120,7 +140,8 @@ export function createEditor(parent, options = {}) {
     tabSize = 4,
     onChange = () => {},
     onRun = () => {},
-    onSave = () => {}
+    onSave = () => {},
+    enableLinting = true
   } = options
   
   const extensions = [
@@ -142,6 +163,12 @@ export function createEditor(parent, options = {}) {
     languageConf.of(getLanguageExtension(language)),
     themeConf.of(getThemeExtension(colorScheme)),
     fontConf.of(getFontTheme(fontSize, tabSize)),
+    
+    // Add linting if enabled
+    ...(enableLinting ? [
+      lintGutter(),
+      linterConf.of(createLinterExtension(language))
+    ] : []),
     
     // Keymaps - order matters! Custom shortcuts must come first to override defaults
     keymap.of([
@@ -218,9 +245,14 @@ export function createEditor(parent, options = {}) {
   return {
     view,
     updateLanguage(newLang) {
-      view.dispatch({
-        effects: languageConf.reconfigure(getLanguageExtension(newLang))
-      })
+      const effects = [languageConf.reconfigure(getLanguageExtension(newLang))]
+      
+      // Update linter for new language if linting is enabled
+      if (options.enableLinting !== false) {
+        effects.push(linterConf.reconfigure(createLinterExtension(newLang)))
+      }
+      
+      view.dispatch({ effects })
     },
     updateTheme(colorScheme = 'oneDark') {
       view.dispatch({

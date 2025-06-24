@@ -3,9 +3,12 @@ package com.example.compiler.service;
 import com.example.compiler.model.ShareRequest;
 import com.example.compiler.model.ShareResponse;
 import com.example.compiler.model.LoadResponse;
+import com.example.compiler.model.User;
+import com.example.compiler.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -24,8 +28,52 @@ public class ShareService {
     
     @Value("${app.base-url:http://localhost:3000}")
     private String baseUrl;
-      public ShareResponse createShareUrl(ShareRequest request) {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private AnonymousShareService anonymousShareService;    public ShareResponse createShareUrl(ShareRequest request) {
+        return createShareUrl(request, null, null);
+    }
+    
+    public ShareResponse createShareUrl(ShareRequest request, String userId) {
+        return createShareUrl(request, userId, null);
+    }
+    
+    public ShareResponse createShareUrl(ShareRequest request, String userId, String clientIp) {
         try {
+            // Check share limits for authenticated users
+            if (userId != null) {
+                Optional<User> userOptional = userRepository.findById(userId);
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
+                    
+                    if (!user.canShare()) {
+                        int remaining = user.getRemainingShares();
+                        throw new RuntimeException("Daily share limit reached. You can create " + remaining + " more shares today. Upgrade to Advanced or Master tier for unlimited sharing.");
+                    }
+                    
+                    // Increment share count and save
+                    user.incrementShareCount();
+                    userRepository.save(user);
+                    
+                    logger.info("User {} has used {} shares today", user.getUsername(), user.getShareCount());
+                }            } else if (clientIp != null) {
+                // Handle anonymous users with IP-based tracking
+                if (!anonymousShareService.canShare(clientIp)) {
+                    int remaining = anonymousShareService.getRemainingShares(clientIp);
+                    throw new RuntimeException("Daily share limit reached. You can create " + remaining + " more shares today. Create an account for higher limits!");
+                }
+                
+                // Record the share for this IP
+                anonymousShareService.recordShare(clientIp);
+                logger.info("Anonymous IP {} creating share", clientIp);
+            } else {
+                // Fallback case - no tracking
+                logger.info("Anonymous user creating share (no IP tracking)");
+            }
+            
             // Convert request to JSON
             String json = objectMapper.writeValueAsString(request);
             logger.info("Original JSON size: {} bytes", json.length());
@@ -33,7 +81,8 @@ public class ShareService {
             // Compress the JSON
             byte[] compressed = compress(json);
             logger.info("Compressed size: {} bytes", compressed.length);
-              // Encode to Base64 URL-safe
+            
+            // Encode to Base64 URL-safe
             String encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(compressed);
             logger.info("Base64 encoded size: {} characters", encoded.length());
             

@@ -157,6 +157,7 @@ gem install json nokogiri"
 <script>
 import { installPackages, executeCustomCommands } from '../services/api'
 import authService from '../services/auth'
+import { eventBus } from '../services/eventBus'
 
 export default {
   name: 'CommandsComponent',
@@ -195,18 +196,28 @@ export default {
     language: {
       handler: 'loadPackagesForLanguage',
       immediate: true
-    }
-  },  async mounted() {
+    }  },  async mounted() {
     // Simply set tier based on authentication status
     // No API calls needed for now
     this.loadUserTier()
+    
+    // Listen for tier updates
+    eventBus.on('tier-updated', this.handleTierUpdate)
+  },
+  beforeUnmount() {
+    // Remove event listeners
+    eventBus.off('tier-updated', this.handleTierUpdate)
   },methods: {    loadUserTier() {
       // Simple synchronous check - no API calls
       if (authService.isAuthenticated()) {
         this.userTier = 'BASIC' // Default to BASIC for authenticated users
-      } else {
-        this.userTier = 'ANONYMOUS'
+      } else {        this.userTier = 'ANONYMOUS'
       }
+    },
+    
+    handleTierUpdate(newTier) {
+      // Update user tier when it changes
+      this.userTier = newTier
     },
     
     loadPackagesForLanguage() {

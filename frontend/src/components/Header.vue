@@ -160,6 +160,13 @@
         <button @click="removeToast(toast.id)" class="toast-close">&times;</button>
       </div>
     </div>
+    
+    <!-- Standalone Upgrade Modal (for external triggers) -->
+    <UpgradeComponent 
+      v-if="showStandaloneUpgradeModal"
+      @tier-updated="handleTierUpdated"
+      @close="showStandaloneUpgradeModal = false"
+    />
   </header>
 </template>
 
@@ -167,6 +174,7 @@
 import authService from '../services/auth'
 import SettingsComponent from './SettingsComponent.vue'
 import UpgradeComponent from './UpgradeComponent.vue'
+import { eventBus } from '../services/eventBus.ts'
 
 export default {
   name: 'Header',
@@ -180,6 +188,7 @@ export default {
       showUserMenu: false,
       showSettingsModal: false,
       showUpgradeModal: false,
+      showStandaloneUpgradeModal: false,
       logoUrl: '/logo.png', // You can add your logo here
       showSnippetsModalOpen: false,
       snippets: [],
@@ -369,8 +378,15 @@ export default {
     handleTierUpdated(newTier) {
       // Handle tier update - could refresh user info, emit event, etc.
       this.showUpgradeModal = false
+      this.showStandaloneUpgradeModal = false
       this.showUserMenu = false
     },
+    
+    handleShowUpgradeModal() {
+      console.log('Header: Showing standalone upgrade modal')
+      this.showStandaloneUpgradeModal = true
+      this.showUserMenu = false // Close user menu if open
+    }
   },
   mounted() {
     // Close user menu when clicking outside
@@ -379,6 +395,14 @@ export default {
         this.showUserMenu = false
       }
     })
+    
+    // Listen for show upgrade modal event
+    eventBus.on('show-upgrade-modal', this.handleShowUpgradeModal)
+  },
+  
+  beforeUnmount() {
+    // Remove event listeners
+    eventBus.off('show-upgrade-modal', this.handleShowUpgradeModal)
   }
 }
 </script>

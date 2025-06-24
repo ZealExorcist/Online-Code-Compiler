@@ -146,3 +146,14 @@ export async function executeCustomCommands(language: string, commands: string[]
     throw new Error(error.response?.data?.error || error.response?.data?.message || 'Command execution failed')
   }
 }
+
+export async function getShareLimits() {
+  try {
+    const response = await api.get('/share/limits')
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || error.response?.data?.message || 'Failed to get share limits')
+  }
+}
+
+export default api

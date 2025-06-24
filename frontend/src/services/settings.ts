@@ -20,6 +20,7 @@ export interface UserSettings {
   enableInput: boolean
   publicSnippets: boolean
   shareByDefault: boolean
+  enableErrorHighlighting: boolean
 }
 
 export interface UserProfile {
@@ -164,7 +165,6 @@ export class SettingsService {
       }
     }
     return this.getDefaultSettings()  }
-
   // Get default settings
   getDefaultSettings(): UserSettings {    return {
       theme: 'dark',
@@ -180,7 +180,8 @@ export class SettingsService {
       maxOutputSize: 10240,
       enableInput: true,
       publicSnippets: false,
-      shareByDefault: false
+      shareByDefault: false,
+      enableErrorHighlighting: true
     }
   }
 

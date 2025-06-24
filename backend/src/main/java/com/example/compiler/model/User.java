@@ -36,8 +36,10 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
     
     private LocalDateTime lastLoginAt;
+      private List<String> snippetIds = new ArrayList<>();
     
-    private List<String> snippetIds = new ArrayList<>();
+    private int shareCount = 0; // Track number of shares created
+    private LocalDateTime shareCountResetDate = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0); // Daily reset
     
     private Map<String, Object> metadata = new HashMap<>();
     
@@ -166,11 +168,62 @@ public class User {
             roles.add(role);
         }
     }
-    
-    public void addSnippetId(String snippetId) {
+      public void addSnippetId(String snippetId) {
         if (!snippetIds.contains(snippetId)) {
             snippetIds.add(snippetId);
         }
+    }
+    
+    public int getShareCount() {
+        return shareCount;
+    }
+    
+    public void setShareCount(int shareCount) {
+        this.shareCount = shareCount;
+    }
+    
+    public LocalDateTime getShareCountResetDate() {
+        return shareCountResetDate;
+    }
+    
+    public void setShareCountResetDate(LocalDateTime shareCountResetDate) {
+        this.shareCountResetDate = shareCountResetDate;
+    }
+    
+    public void incrementShareCount() {
+        this.shareCount++;
+    }
+    
+    public void resetShareCountIfNeeded() {
+        LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        if (shareCountResetDate.isBefore(today)) {
+            this.shareCount = 0;
+            this.shareCountResetDate = today;
+        }
+    }
+    
+    public boolean canShare() {
+        resetShareCountIfNeeded();
+        
+        // Premium and advanced users have unlimited shares
+        if ("ADVANCED".equals(tier) || "MASTER".equals(tier)) {
+            return true;
+        }
+        
+        // Basic users have daily limit of 3 shares
+        return shareCount < 3;
+    }
+    
+    public int getRemainingShares() {
+        resetShareCountIfNeeded();
+        
+        // Premium and advanced users have unlimited shares
+        if ("ADVANCED".equals(tier) || "MASTER".equals(tier)) {
+            return -1; // Indicate unlimited
+        }
+        
+        // Basic users have daily limit of 3 shares
+        return Math.max(0, 3 - shareCount);
     }
     
     public static class UserSettings {
