@@ -248,6 +248,25 @@
           </div>
 
           <div class="setting-group">
+            <label>Gemini API Key</label>
+            <div class="gemini-api-key-section">
+              <input 
+                :type="showGeminiApiKey ? 'text' : 'password'"
+                v-model="settings.geminiApiKey"
+                @change="updateSettings"
+                placeholder="Enter your Gemini API key for AI Insights"
+                class="gemini-api-key-input"
+              />
+              <button @click="toggleGeminiApiKeyVisibility" class="toggle-visibility-button">
+                {{ showGeminiApiKey ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+            <p class="setting-description">
+              Required for AI Insights feature. Get your API key from Google AI Studio.
+            </p>
+          </div>
+
+          <div class="setting-group">
             <label>Change Password</label>
             <div class="password-section">
               <input 
@@ -290,6 +309,7 @@ export default {
         oldPassword: '',
         newPassword: ''
       },
+      showGeminiApiKey: false,
       message: '',
       messageType: 'success',
       tabs: [
@@ -381,6 +401,10 @@ export default {
       }
     },
 
+    toggleGeminiApiKeyVisibility() {
+      this.showGeminiApiKey = !this.showGeminiApiKey
+    },
+
     showMessage(text, type) {
       this.message = text
       this.messageType = type
@@ -401,8 +425,9 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background: #f8f9fa;
+  background: var(--bg-primary);
   min-height: 100vh;
+  color: var(--text-primary);
 }
 
 .settings-header {
@@ -411,45 +436,49 @@ export default {
   align-items: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .settings-header h1 {
   margin: 0;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 .back-button {
   padding: 8px 16px;
-  background: #667eea;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  transition: background-color 0.2s ease;
 }
 
 .back-button:hover {
-  background: #5a67d8;
+  filter: brightness(1.1);
 }
 
 .settings-content {
   display: flex;
   gap: 20px;
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
   overflow: hidden;
 }
 
 .settings-nav {
   min-width: 200px;
-  background: #f7fafc;
+  background: var(--bg-tertiary);
   padding: 20px 0;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border-color);
 }
 
 .nav-button {
@@ -459,18 +488,18 @@ export default {
   text-align: left;
   cursor: pointer;
   font-size: 16px;
-  color: #4a5568;
-  transition: all 0.2s;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
   border-left: 3px solid transparent;
 }
 
 .nav-button:hover {
-  background: #edf2f7;
-  color: #2d3748;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .nav-button.active {
-  background: #667eea;
+  background: var(--accent-color);
   color: white;
   border-left-color: #4c51bf;
 }
@@ -482,7 +511,7 @@ export default {
 
 .settings-section h2 {
   margin: 0 0 20px 0;
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 20px;
 }
 
@@ -494,7 +523,7 @@ export default {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 .checkbox-label {
@@ -505,26 +534,34 @@ export default {
 
 .checkbox-label input[type="checkbox"] {
   margin: 0;
+  accent-color: var(--accent-color);
 }
 
 .setting-group input,
 .setting-group select {
   width: 100%;
   padding: 10px 12px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-color);
   border-radius: 6px;
   font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease;
 }
 
 .setting-group input:focus,
 .setting-group select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--accent-color);
+}
+
+.setting-group input::placeholder {
+  color: var(--text-muted);
 }
 
 .setting-description {
   font-size: 12px;
-  color: #718096;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
@@ -540,18 +577,34 @@ export default {
   font-size: 12px;
 }
 
-.refresh-button {
+.gemini-api-key-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.gemini-api-key-input {
+  flex: 1;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.refresh-button,
+.toggle-visibility-button {
   padding: 10px 16px;
-  background: #38a169;
+  background: var(--success-color);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
 }
 
-.refresh-button:hover {
-  background: #2f855a;
+.refresh-button:hover,
+.toggle-visibility-button:hover {
+  filter: brightness(1.1);
 }
 
 .password-section {
@@ -562,16 +615,17 @@ export default {
 
 .change-password-button {
   padding: 10px 16px;
-  background: #667eea;
+  background: var(--accent-color);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  transition: background-color 0.2s ease;
 }
 
 .change-password-button:hover {
-  background: #5a67d8;
+  filter: brightness(1.1);
 }
 
 .message {
@@ -585,15 +639,40 @@ export default {
 }
 
 .message.success {
-  background: #c6f6d5;
-  color: #22543d;
-  border: 1px solid #9ae6b4;
+  background: var(--success-color);
+  color: white;
+  border: 1px solid var(--success-color);
 }
 
 .message.error {
-  background: #fed7d7;
-  color: #742a2a;
-  border: 1px solid #feb2b2;
+  background: var(--error-color);
+  color: white;
+  border: 1px solid var(--error-color);
+}
+
+/* Theme specific adjustments for better contrast */
+[data-theme="light"] .message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+[data-theme="light"] .message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+[data-theme="dark"] .message.success {
+  background: rgba(72, 187, 120, 0.2);
+  color: #68d391;
+  border: 1px solid #68d391;
+}
+
+[data-theme="dark"] .message.error {
+  background: rgba(245, 101, 101, 0.2);
+  color: #f56565;
+  border: 1px solid #f56565;
 }
 
 @media (max-width: 768px) {
@@ -605,6 +684,8 @@ export default {
     min-width: auto;
     flex-direction: row;
     overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
   }
   
   .nav-button {

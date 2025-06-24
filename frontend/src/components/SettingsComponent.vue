@@ -125,9 +125,7 @@
                   <span class="label">Member Since:</span>
                   <span class="value">{{ formatDate(userProfile.createdAt) }}</span>
                 </div>
-              </div>
-
-              <div class="api-key-section">
+              </div>              <div class="api-key-section">
                 <h5>API Key</h5>
                 <div class="api-key-display">
                   <input 
@@ -144,6 +142,25 @@
                 <button @click="regenerateApiKey" class="regenerate-btn" :disabled="isRegenerating">
                   {{ isRegenerating ? 'Regenerating...' : 'Regenerate API Key' }}
                 </button>
+              </div>
+
+              <div class="gemini-api-section">
+                <h5>Gemini API Key</h5>
+                <div class="gemini-api-display">
+                  <input 
+                    :type="showGeminiApiKey ? 'text' : 'password'"
+                    v-model="settings.geminiApiKey"
+                    @change="updateSettings"
+                    placeholder="Enter your Gemini API key for AI Insights"
+                    class="gemini-api-input"
+                  />
+                  <button @click="toggleGeminiApiKeyVisibility" class="toggle-visibility-btn">
+                    {{ showGeminiApiKey ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+                <small class="setting-help">
+                  Required for AI Insights feature. Get your API key from Google AI Studio.
+                </small>
               </div>
 
               <div class="password-section">
@@ -234,7 +251,9 @@ export default {
         maxOutputSize: 10240,
         enableInput: true,
         publicSnippets: false,
-        shareByDefault: false
+        shareByDefault: false,
+        enableErrorHighlighting: true,
+        geminiApiKey: ''
       },userProfile: null,
       passwordForm: {
         oldPassword: '',
@@ -245,9 +264,10 @@ export default {
         { id: 'execution', name: 'Execution' },
         { id: 'account', name: 'Account' },
         { id: 'privacy', name: 'Privacy' }
-      ],copied: false,
+      ],      copied: false,
       isRegenerating: false,      isChangingPassword: false,
       isDeleting: false,
+      showGeminiApiKey: false,
       successMessage: '',
       errorMessage: ''
     }
@@ -375,7 +395,10 @@ export default {
 
     formatDate(dateString) {
       if (!dateString) return 'Unknown'
-      return new Date(dateString).toLocaleDateString()
+      return new Date(dateString).toLocaleDateString()    },
+
+    toggleGeminiApiKeyVisibility() {
+      this.showGeminiApiKey = !this.showGeminiApiKey
     },
 
     showSuccess(message) {
@@ -412,8 +435,8 @@ export default {
 }
 
 .settings-btn {
-  background: var(--btn-bg, linear-gradient(135deg, #6c757d 0%, #495057 100%));
-  color: var(--btn-text, white);
+  background: var(--accent-color);
+  color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -428,7 +451,7 @@ export default {
 
 .settings-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+  filter: brightness(1.1);
 }
 
 .modal-overlay {
@@ -437,7 +460,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -445,7 +468,7 @@ export default {
 }
 
 .modal-content {
-  background: var(--modal-bg, white);
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 0;
   max-width: 900px;
@@ -457,7 +480,8 @@ export default {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  color: var(--text-color, #1f2937);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .modal-header {
@@ -465,14 +489,14 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-  background: var(--header-bg, #f9fafb);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
   flex-shrink: 0;
 }
 
 .modal-header h3 {
   margin: 0;
-  color: var(--text-color, #1f2937);
+  color: var(--text-primary);
   font-size: 20px;
 }
 
@@ -481,7 +505,7 @@ export default {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-muted);
   padding: 0;
   width: 30px;
   height: 30px;
@@ -493,7 +517,7 @@ export default {
 }
 
 .close-btn:hover {
-  background: #e5e7eb;
+  background: var(--bg-primary);
 }
 
 .modal-body {
@@ -505,8 +529,8 @@ export default {
 .settings-nav {
   min-width: 200px;
   width: 200px;
-  background: var(--nav-bg, #f9fafb);
-  border-right: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-tertiary);
+  border-right: 1px solid var(--border-color);
   padding: 20px 0;
   flex-shrink: 0;
 }
@@ -518,19 +542,19 @@ export default {
   border: none;
   background: none;
   text-align: left;
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .nav-button:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .nav-button.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent-color);
   color: white;
   font-weight: 500;
 }
@@ -544,7 +568,7 @@ export default {
 
 .settings-section h4 {
   margin: 0 0 20px 0;
-  color: #1f2937;
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 600;
 }
@@ -556,7 +580,7 @@ export default {
 .setting-group label {
   display: block;
   margin-bottom: 6px;
-  color: #374151;
+  color: var(--text-primary);
   font-weight: 500;
   font-size: 14px;
 }
@@ -566,17 +590,23 @@ export default {
 .setting-group input[type="password"] {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   transition: border-color 0.2s;
 }
 
 .setting-group select:focus,
 .setting-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--accent-color);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.setting-group input::placeholder {
+  color: var(--text-muted);
 }
 
 .checkbox-group label {
@@ -592,17 +622,17 @@ export default {
   height: 20px;
   margin: 0;
   appearance: none;
-  border: 2px solid #d1d5db;
+  border: 2px solid var(--border-color);
   border-radius: 4px;
-  background: white;
+  background: var(--bg-primary);
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
 }
 
 .checkbox-group input[type="checkbox"]:checked {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 .checkbox-group input[type="checkbox"]:checked::after {
@@ -617,96 +647,155 @@ export default {
 }
 
 .checkbox-group input[type="checkbox"]:hover {
-  border-color: #667eea;
+  border-color: var(--accent-color);
 }
 
 .setting-help {
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-muted);
   font-style: italic;
   line-height: 1.4;
 }
 
-.settings-component[data-theme="dark"] .setting-help {
-  color: #9ca3af;
+/* User Info Section */
+.user-info {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
-.settings-component[data-theme="dark"] {
-  --btn-bg: linear-gradient(135deg, #4b5563 0%, #374151 100%);
-  --btn-text: #f9fafb;
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.settings-component[data-theme="dark"] .modal-content {
-  --modal-bg: #1f2937;
-  --text-color: #f9fafb;
-  --header-bg: #374151;
-  --nav-bg: #374151;
-  --border-color: #4b5563;
+.info-row:last-child {
+  border-bottom: none;
 }
 
-.settings-component[data-theme="light"] {
-  --btn-bg: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-  --btn-text: white;
+.info-row .label {
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
-.settings-component[data-theme="light"] .modal-content {
-  --modal-bg: white;
-  --text-color: #1f2937;
-  --header-bg: #f9fafb;
-  --nav-bg: #f9fafb;
-  --border-color: #e5e7eb;
+.info-row .value {
+  color: var(--text-primary);
 }
 
-.settings-component[data-theme="dark"] .nav-button {
-  color: #d1d5db;
-}
-
-.settings-component[data-theme="dark"] .nav-button:hover {
-  background: #4b5563;
-  color: #f9fafb;
-}
-
-.settings-component[data-theme="dark"] .nav-button.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.tier-badge {
+  background: var(--accent-color);
   color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
-.settings-component[data-theme="dark"] .setting-group label {
-  color: #d1d5db;
+/* API Key Sections */
+.api-key-section,
+.gemini-api-section {
+  margin-bottom: 24px;
 }
 
-.settings-component[data-theme="dark"] .setting-group select,
-.settings-component[data-theme="dark"] .setting-group input[type="text"],
-.settings-component[data-theme="dark"] .setting-group input[type="password"] {
-  background: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+.api-key-section h5,
+.gemini-api-section h5 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.settings-component[data-theme="dark"] .user-info {
-  background: #374151;
-  border-color: #4b5563;
+.api-key-display,
+.gemini-api-display {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.settings-component[data-theme="dark"] .info-row .label {
-  color: #9ca3af;
+.api-key-input,
+.gemini-api-input {
+  flex: 1;
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
-.settings-component[data-theme="dark"] .info-row .value {
-  color: #f9fafb;
+.copy-btn,
+.toggle-visibility-btn,
+.regenerate-btn,
+.change-password-btn {
+  padding: 8px 12px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.2s;
 }
 
-.settings-component[data-theme="dark"] .close-btn:hover {
-  background: #4b5563;
+.copy-btn:hover,
+.toggle-visibility-btn:hover,
+.regenerate-btn:hover,
+.change-password-btn:hover {
+  filter: brightness(1.1);
 }
 
-.settings-component[data-theme="dark"] .snippet-item {
-  --snippet-bg: #374151;
-  --code-bg: #1f2937;
-  --code-color: #d1d5db;
-  --meta-color: #9ca3af;
+.regenerate-btn {
+  background: var(--success-color);
+}
+
+.change-password-btn {
+  margin-top: 12px;
+}
+
+/* Password Section */
+.password-section {
+  margin-bottom: 24px;
+}
+
+.password-section h5 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Success/Error Messages */
+.success-message,
+.error-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  z-index: 1001;
+  min-width: 250px;
+}
+
+.success-message {
+  background: var(--success-color);
+  color: white;
+  border: 1px solid var(--success-color);
+}
+
+.error-message {
+  background: var(--error-color);
+  color: white;
+  border: 1px solid var(--error-color);
 }
 
 @media (max-width: 768px) {
@@ -722,7 +811,7 @@ export default {
   .settings-nav {
     min-width: auto;
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
     padding: 12px 0;
   }
   
@@ -734,7 +823,8 @@ export default {
     border-radius: 6px;
   }
   
-  .api-key-display {
+  .api-key-display,
+  .gemini-api-display {
     flex-direction: column;
   }
 }

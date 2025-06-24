@@ -3,7 +3,6 @@ import type { RouteRecordRaw } from 'vue-router'
 import Home from '../views/Home.vue'
 import Snippet from '../views/Snippet.vue'
 import AuthPage from '../views/AuthPage.vue'
-import SettingsPage from '../views/SettingsPage.vue'
 import authService from '../services/auth'
 
 const routes: Array<RouteRecordRaw> = [
@@ -16,12 +15,6 @@ const routes: Array<RouteRecordRaw> = [
     path: '/login',
     name: 'Auth',
     component: AuthPage
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: SettingsPage,
-    meta: { requiresAuth: true }
   },
   {
     path: '/snippets/:id',

@@ -21,6 +21,7 @@ export interface UserSettings {
   publicSnippets: boolean
   shareByDefault: boolean
   enableErrorHighlighting: boolean
+  geminiApiKey?: string
 }
 
 export interface UserProfile {
@@ -181,7 +182,8 @@ export class SettingsService {
       enableInput: true,
       publicSnippets: false,
       shareByDefault: false,
-      enableErrorHighlighting: true
+      enableErrorHighlighting: true,
+      geminiApiKey: ''
     }
   }
 
