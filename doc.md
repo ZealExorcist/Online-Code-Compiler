@@ -117,13 +117,36 @@ Browser (Vue.js SPA)
 
 ### User Interface Features
 
-✅ **Modern Design**
+✅ **Modern Design System**
 - Responsive layout for all screen sizes
-- Dark/Light theme with custom color schemes
+- Custom theme system with CSS variables
+- Dark/Light themes with professional color schemes
 - Intuitive toolbar with language selection
-- Real-time output display
+- Real-time output display with enhanced scrolling
 - Input panel for interactive programs
 - **Package Commands interface** with predefined library selection for secure package installation
+
+✅ **Enhanced Editor Experience**
+- **Monaco Editor**: Full VS Code-like experience
+- **Smooth Scrolling**: Enhanced scroll wheel support for long outputs
+- **Real-time Error Highlighting**: Syntax validation as you type
+- **Code Intelligence**: Auto-completion, bracket matching, code folding
+- **Customizable Interface**: Font size, tab size, theme preferences
+- **Keyboard Shortcuts**: Standard IDE shortcuts (Ctrl+Enter, Ctrl+S)
+
+✅ **Settings Management**
+- **Centralized Settings**: Single settings component for all preferences
+- **Real-time Sync**: Settings apply immediately across the interface
+- **Gemini API Integration**: Secure API key management for AI features
+- **Theme Customization**: Multiple theme options with instant preview
+- **Editor Preferences**: Font, tab size, and display customization
+
+✅ **Output Panel Enhancements**
+- **AI Insights Integration**: Built-in AI code analysis for Master users
+- **Scroll Optimization**: Smooth scrolling for large outputs
+- **Error Highlighting**: Visual distinction between stdout and stderr
+- **Execution Metadata**: Timing, tier information, and limits display
+- **Interactive Elements**: Clickable links and formatted output
 
 ### Anonymous User Experience
 
@@ -132,6 +155,15 @@ Browser (Vue.js SPA)
 - All supported programming languages
 - Code sharing and loading capabilities
 - Keyboard shortcuts (Ctrl+Enter, Ctrl+S)
+
+### Anonymous User Experience
+
+✅ **Full Code Editor Access**
+- Complete Monaco Editor with syntax highlighting
+- All supported programming languages
+- Code sharing and loading capabilities
+- Keyboard shortcuts (Ctrl+Enter, Ctrl+S)
+- Real-time error detection (optional)
 
 ✅ **Basic Code Execution**
 - **5 executions per hour** (IP-based tracking)
@@ -151,6 +183,7 @@ Browser (Vue.js SPA)
 - IP-based rate limiting (shared on networks)
 - No personal snippet management
 - No usage analytics or history
+- No AI Insights access
 
 ### Package Installation System
 
@@ -183,6 +216,65 @@ Browser (Vue.js SPA)
 - **R**: Data Science packages (ggplot2, dplyr, tidyr)
 
 The dual-mode approach provides safe package access for all users while offering advanced capabilities for paying subscribers, balancing security with flexibility.
+- IP-based rate limiting (shared on networks)
+- No personal snippet management
+- No usage analytics or history
+
+### User Authentication & Tier System
+
+✅ **Multi-Tier Access Control**
+- **Anonymous Users**: Basic access with limitations (5 executions/hour, 60s delay)
+- **Basic Tier**: Enhanced limits and standard features
+- **Advanced Tier**: Package installation, reduced delays, higher limits
+- **Master Tier**: AI Insights, custom commands, premium features
+- **JWT Authentication**: Secure token-based user sessions
+
+✅ **User Management**
+- User registration and login system
+- Profile management and preferences
+- Secure password handling with encryption
+- API key management for external integrations
+- Usage analytics and tier-based restrictions
+
+✅ **Authentication Features**
+- JWT token generation and validation
+- Refresh token mechanism for long sessions
+- Secure logout and session management
+- Role-based access control (RBAC)
+- API endpoint protection based on user tier
+
+### AI-Powered Code Analysis
+
+✅ **AI Insights (Premium Feature)**
+- **Google Gemini Integration**: Latest gemini-2.0-flash model
+- **Comprehensive Code Review**: Security, performance, and quality analysis
+- **User API Keys**: Option to use personal Gemini API keys
+- **Detailed Reports**: In-depth analysis with specific recommendations
+- **Multi-language Support**: AI analysis for all supported programming languages
+- **Tier Restriction**: Available for Master tier users only
+
+✅ **AI Analysis Features**
+- **Security Review**: Identifies potential security vulnerabilities
+- **Code Quality**: Best practices and optimization suggestions
+- **Performance Analysis**: Performance bottlenecks and improvements
+- **Bug Detection**: Potential runtime errors and logic issues
+- **Documentation**: Code readability and documentation suggestions
+
+### Real-time Error Detection
+
+✅ **Advanced Error Highlighting**
+- **Language-Specific Analysis**: Tailored error detection per language
+- **Block vs Line Languages**: Different strategies for compiled vs interpreted languages
+- **Real-time Feedback**: Instant error highlighting as you type
+- **Context-Aware**: Smart bracket matching and syntax validation
+- **Reduced False Positives**: Improved accuracy with context analysis
+
+✅ **Error Detection Features**
+- **Bracket Analysis**: Global bracket matching for block-based languages
+- **Semicolon Checking**: Context-aware semicolon validation
+- **String Literal Handling**: Proper handling of quotes and escape sequences
+- **Comment Awareness**: Ignores syntax errors within comments
+- **Settings Toggle**: User can enable/disable real-time error checking
 
 ## Supported Languages
 
@@ -366,6 +458,7 @@ The API supports both authenticated and anonymous access:
 ```http
 POST /api/execute
 Content-Type: application/json
+Authorization: Bearer <token> (optional)
 
 {
   "code": "print('Hello, World!')",
@@ -398,6 +491,70 @@ Content-Type: application/json
 }
 ```
 
+#### AI Insights (Master Tier Only)
+
+**Get AI Code Analysis**
+```http
+POST /api/ai/analyze
+Content-Type: application/json
+Authorization: Bearer <token> (required)
+
+{
+  "code": "def factorial(n):\n    return n * factorial(n-1)",
+  "language": "python"
+}
+```
+
+**Response:**
+```json
+{
+  "insights": "**Security Analysis:**\n- Risk of stack overflow for large inputs\n\n**Performance:**\n- Consider iterative approach for better performance\n\n**Code Quality:**\n- Missing base case for recursion",
+  "success": true,
+  "model": "gemini-2.0-flash",
+  "analysisTime": 850
+}
+```
+
+#### Authentication
+
+**User Registration**
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+```
+
+**User Login**
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "john_doe",
+  "password": "securePassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
+  "user": {
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "tier": "BASIC"
+  }
+}
+```
+
 #### Snippet Management
 
 **Save Snippet**
@@ -426,16 +583,22 @@ POST /api/snippets/{id}/share
 
 ### Rate Limiting
 
-#### Anonymous Users
-- **5 requests per hour**
-- **60-second compilation delay**
-- **IP-based rate limiting**
-- **Basic execution features only**
+#### Tier-Based Limits
 
-#### Authenticated Users
-- **Basic users**: 10 requests per hour, 30-second delay
-- **Advanced users**: 50 requests per hour, 15-second delay  
-- **Master users**: 200 requests per hour, instant execution
+| Tier | Requests/Hour | Execution Delay | Features |
+|------|---------------|-----------------|----------|
+| **Anonymous** | 5 | 60 seconds | Basic execution, sharing |
+| **Basic** | 10 | 30 seconds | Enhanced limits, user profile |
+| **Advanced** | 50 | 15 seconds | Package installation, faster execution |
+| **Master** | 200 | Instant | AI Insights, custom commands, premium |
+
+#### Implementation Details
+
+- **IP-based tracking** for anonymous users
+- **User-based tracking** for authenticated users  
+- **Rolling window** rate limiting (hourly reset)
+- **Graceful degradation** with informative error messages
+- **Tier upgrade prompts** when limits are reached
 
 ## Security
 
@@ -450,11 +613,31 @@ POST /api/snippets/{id}/share
 ### Application Security
 
 - **Input Validation**: All user inputs are validated and sanitized
-- **SQL Injection**: Parameterized queries with JPA
-- **XSS Protection**: Output encoding on frontend
-- **CSRF**: CSRF tokens for state-changing operations
-- **Rate Limiting**: API rate limits to prevent abuse
-- **JWT Security**: Secure token generation and validation
+- **SQL Injection**: Parameterized queries with JPA and Spring Data
+- **XSS Protection**: Output encoding on frontend and CSP headers
+- **CSRF**: CSRF tokens for state-changing operations  
+- **JWT Security**: Secure token generation and validation with configurable expiration
+- **API Rate Limiting**: Tier-based rate limits to prevent abuse
+- **Password Security**: Bcrypt hashing with salt for password storage
+- **API Key Management**: Secure storage and validation of user API keys (Gemini)
+- **CORS Configuration**: Properly configured cross-origin resource sharing
+- **Session Management**: Stateless JWT tokens with refresh mechanism
+
+### AI Security
+
+- **API Key Isolation**: User API keys stored securely and used only for their requests
+- **Model Validation**: Only approved AI models allowed (gemini-2.0-flash)
+- **Input Sanitization**: Code inputs sanitized before AI analysis
+- **Rate Limiting**: AI requests subject to tier-based limits
+- **Error Handling**: Secure error messages without exposing internal details
+- **Timeout Protection**: AI requests timeout to prevent resource exhaustion
+
+### Error Detection Security
+
+- **Client-side Only**: Error detection runs entirely in browser
+- **No Data Transmission**: Code analysis never sent to external servers
+- **Safe Parsing**: Robust parsing that handles malformed code safely
+- **Performance Bounds**: Error detection limited to prevent UI blocking
 
 ### Resource Limits
 
@@ -550,18 +733,41 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+  security:
+    jwt:
+      secret: ${JWT_SECRET:default-secret}
+      expiration: 86400000
 
 compiler:
   docker:
     enabled: true
     timeout: 30000
-  security:
-    jwt:
-      secret: ${JWT_SECRET:default-secret}
-      expiration: 86400000
+    max-output-size: 10240
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: "gemini-2.0-flash"
+      timeout: 30000
   rate-limit:
     enabled: true
-    requests-per-minute: 10
+    anonymous:
+      requests-per-hour: 5
+      delay-seconds: 60
+    basic:
+      requests-per-hour: 10
+      delay-seconds: 30
+    advanced:
+      requests-per-hour: 50
+      delay-seconds: 15
+    master:
+      requests-per-hour: 200
+      delay-seconds: 0
+  tiers:
+    default: ANONYMOUS
+    features:
+      ai-insights: [MASTER]
+      custom-packages: [ADVANCED, MASTER]
+      unlimited-sharing: [ADVANCED, MASTER]
 ```
 
 ### Frontend Configuration
